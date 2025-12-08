@@ -158,7 +158,7 @@ if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => {
     if(isTouchDevice && step < 99 && lastTouchPos) {
         // Usamos la posición "congelada" de la LUPA (no del dedo)
         registerPoint(lastTouchPos);
-        // Opcional: Borrar la mira después de marcar
+        // Borramos la mira de previsualización para que quede solo el punto definitivo
         lastTouchPos = null;
         draw(); 
     }
@@ -353,6 +353,8 @@ if (!isTouchDevice) {
         const bgX = -(canvasX * zoomFactor) + 70;
         const bgY = -(canvasY * zoomFactor) + 70;
         zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
+        
+        draw(); // Redibujar para mostrar la cruz en movimiento
     }
 
     canvas.addEventListener('touchstart', (e) => {
@@ -367,8 +369,10 @@ if (!isTouchDevice) {
 
     canvas.addEventListener('touchend', (e) => {
         e.preventDefault();
-        // Al soltar, ocultamos la lupa pero lastTouchPos queda guardado para el botón "Marcar"
+        // Al soltar, ocultamos la lupa pero lastTouchPos queda guardado.
+        // El draw() se encargará de dibujar la cruz roja en lastTouchPos.
         zoomLens.style.display = 'none';
+        draw();
     });
 }
 
@@ -496,8 +500,23 @@ function draw() {
         drawOffsideLineToVP(pts.att, COLORS.att);
     }
     
-    // NOTA: Ya no dibujamos "Crosshair" aquí porque la lupa ya tiene su cruz en CSS
+    // 3. DIBUJAR MIRA DE PREVISUALIZACIÓN EN LA IMAGEN (Solo si hay posición guardada)
+    if (isTouchDevice && lastTouchPos && step < 99) {
+        drawCrosshair(lastTouchPos.x, lastTouchPos.y);
+    }
 
+    ctx.restore();
+}
+
+function drawCrosshair(x, y) {
+    ctx.save();
+    ctx.strokeStyle = '#ff0000'; // ROJO
+    ctx.lineWidth = 1; // 1px
+    ctx.beginPath();
+    // Dibujar cruz de 20px de tamaño total
+    ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y); 
+    ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 10);
+    ctx.stroke();
     ctx.restore();
 }
 
