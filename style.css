@@ -1,5 +1,5 @@
 /* =========================================
-   ESTILOS (CSS) - FIX VISIBILIDAD MÓVIL Y BOTÓN REINICIAR
+   ESTILOS (CSS) - FIX LUPA SATÉLITE MÓVIL
    ========================================= */
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -60,12 +60,12 @@ button:active { transform: scale(0.95); }
 #workspace { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; background: #222; overflow: hidden; opacity: 0; }
 canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; }
 
-/* ESTILO DEL NUEVO BOTÓN FLOTANTE DE REINICIO (MOVIDO AL CENTRO) */
+/* BOTÓN FLOTANTE DE REINICIO */
 #btn-floating-reset {
     position: absolute;
     top: 15px;
-    left: 50%; /* CENTRAR */
-    transform: translateX(-50%); /* CENTRAR */
+    left: 50%; 
+    transform: translateX(-50%); 
     z-index: 80;
     background: rgba(0, 0, 0, 0.7); 
     color: #ffc107; 
@@ -76,10 +76,7 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     border-radius: 6px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
-#btn-floating-reset:hover {
-    background: rgba(0, 0, 0, 0.9);
-}
-
+#btn-floating-reset:hover { background: rgba(0, 0, 0, 0.9); }
 
 /* Herramientas Flotantes Análisis */
 #analysis-tools-panel {
@@ -106,6 +103,7 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     border-radius: 50px; display: none; animation: pulse 2s infinite; border: 2px solid white;
 }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
 /* BOTONES MÓVIL (Nueva Imagen) */
 #mobile-analysis-controls { 
     display: flex; gap: 10px; width: 100%; justify-content: space-around;
@@ -115,19 +113,30 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     flex: 1; background: #333; color: #ccc; border: 1px solid #555; padding: 10px 0; border-radius: 8px; font-size: 0.9rem;
 }
 
+/* --- ESTILO LUPA (ZOOM LENS) MODIFICADO --- */
 #zoom-lens {
-    position: fixed; width: 140px; height: 140px; border-radius: 50%; border: 3px solid #fff;
-    overflow: hidden; display: none; pointer-events: none; z-index: 999;
-    background-color: #000; background-repeat: no-repeat; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    position: fixed; 
+    width: 140px; height: 140px; 
+    border-radius: 50%; 
+    border: 3px solid #ffc107; /* Borde amarillo para destacar */
+    overflow: hidden; 
+    display: none; 
+    pointer-events: none; /* Importante: que el dedo 'atraviese' la lupa */
+    z-index: 999;
+    background-color: #000; 
+    background-repeat: no-repeat; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
+
+/* Mira central de la lupa */
 #zoom-lens::after, #zoom-lens::before {
-    content: ''; position: absolute; background: rgba(255, 50, 50, 0.8); top: 50%; left: 50%; transform: translate(-50%, -50%);
+    content: ''; position: absolute; background: rgba(255, 50, 50, 0.9); top: 50%; left: 50%; transform: translate(-50%, -50%);
 }
-#zoom-lens::after { width: 20px; height: 1px; } #zoom-lens::before { height: 20px; width: 1px; }
+#zoom-lens::after { width: 30px; height: 2px; } 
+#zoom-lens::before { height: 30px; width: 2px; }
 
 /* RESULTADOS Y DATOS DE SOFÁ */
 #result-container {
-    /* MANTENER EN LA ESQUINA DERECHA SUPERIOR */
     position: absolute; top: 20px; right: 20px; z-index: 150;
     display: none; flex-direction: column; align-items: flex-end; pointer-events: none;
     max-width: 300px;
@@ -195,101 +204,40 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 #btn-game-offside { background-color: #dc3545; color: white; box-shadow: 0 4px 0 #a71d2a; }
 #btn-game-onside { background-color: #28a745; color: white; box-shadow: 0 4px 0 #1e7e34; }
 
-/* --- MEDIA QUERY PARA MÓVILES (FIX CRÍTICO DE VISIBILIDAD) --- */
+/* --- MEDIA QUERY PARA MÓVILES --- */
 @media (max-width: 800px) { 
-    /* Esconder Reiniciar/Nueva Imagen en la barra superior en móvil */
-    #analysis-controls { 
-        display: none !important;
-    }
+    #analysis-controls { display: none !important; }
+    #top-bar { height: 50px; padding: 0 10px; }
+    .logo { font-size: 1.1rem; }
     
-    /* Achicar la barra superior para aprovechar espacio */
-    #top-bar { 
-        height: 50px; 
-        padding: 0 10px;
-    }
-    .logo {
-        font-size: 1.1rem;
-    }
-    
-    /* Achicar elementos de la pantalla de inicio */
-    .main-mascot {
-        width: 140px;
-    }
-    .big-upload-btn {
-        font-size: 1.2rem;
-        padding: 15px 20px;
-        width: 250px;
-    }
+    .main-mascot { width: 140px; }
+    .big-upload-btn { font-size: 1.2rem; padding: 15px 20px; width: 250px; }
 
-    /* FIX CRÍTICO: Mover el panel de herramientas abajo y hacerlo más compacto */
     #analysis-tools-panel { 
         bottom: 0; left: 0; transform: none; 
-        padding: 8px 10px 15px 10px; /* Reducido el padding */
-        max-width: 100%;
-        gap: 5px;
-        background: rgba(0,0,0,0.95); /* Fondo opaco para que se vea claro */
+        padding: 8px 10px 15px 10px; 
+        max-width: 100%; gap: 5px;
+        background: rgba(0,0,0,0.95); 
         border-top: 1px solid #444; 
     }
-    /* Hacemos la caja de instrucciones más pequeña */
-    #instruction-box {
-        font-size: 0.85rem; 
-        padding: 8px 10px;
-        margin-bottom: 2px;
-    }
-    /* Botón de Analizar más pequeño */
-    #btn-evaluate-big {
-        padding: 12px 20px;
-        font-size: 1.1rem;
-    }
-    /* Selectores de modo más pequeños */
-    #mode-selector {
-        padding: 3px;
-        gap: 0px;
-    }
-    .mode-btn {
-        padding: 6px 15px;
-        font-size: 0.8rem;
-    }
-    /* Botones de Reiniciar/Nueva Imagen más pequeños */
-    #mobile-analysis-controls .small-btn {
-        padding: 8px 0;
-        font-size: 0.85rem;
-    }
-    /* El botón flotante también se reduce */
-    #btn-floating-reset {
-        top: 10px;
-        padding: 6px 10px;
-        font-size: 0.8rem;
-    }
+    #instruction-box { font-size: 0.85rem; padding: 8px 10px; margin-bottom: 2px; }
+    #btn-evaluate-big { padding: 12px 20px; font-size: 1.1rem; }
+    #mode-selector { padding: 3px; gap: 0px; }
+    .mode-btn { padding: 6px 15px; font-size: 0.8rem; }
+    #mobile-analysis-controls .small-btn { padding: 8px 0; font-size: 0.85rem; }
+    #btn-floating-reset { top: 10px; padding: 6px 10px; font-size: 0.8rem; }
 
-    /* Challenge */
-    #challenge-content-area {
-        padding: 10px;
-    }
-    #game-image-container {
-        height: 250px;
-    }
-    .game-btn {
-        padding: 15px;
-        font-size: 1.1rem;
-    }
+    #challenge-content-area { padding: 10px; }
+    #game-image-container { height: 250px; }
+    .game-btn { padding: 15px; font-size: 1.1rem; }
     
-    /* --- FIX RANKING TABLE FOR MOBILE (soluciona puntajes cortados) --- */
     #challenge-sidebar {
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid #333;
-        height: auto;
-        padding: 15px 10px; /* Ajuste el padding para dejar espacio */
-        box-sizing: border-box; /* Asegura que el padding no cause desbordamiento */
-        overflow-x: auto; /* Permite scroll horizontal si la tabla es más ancha que la pantalla */
+        width: 100%; border-left: none; border-top: 1px solid #333;
+        height: auto; padding: 15px 10px; box-sizing: border-box;
+        overflow-x: auto; 
     }
-    
-    .sidebar-table th, .sidebar-table td {
-        padding: 8px 5px; /* Reduce el padding horizontal de las celdas */
-    }
+    .sidebar-table th, .sidebar-table td { padding: 8px 5px; }
     .sidebar-table th:last-child, .sidebar-table td:last-child {
-        padding-right: 5px; /* Pequeño padding a la derecha de los puntajes */
-        white-space: nowrap; /* Evita que los puntajes se corten o envuelvan */
+        padding-right: 5px; white-space: nowrap; 
     }
 }
