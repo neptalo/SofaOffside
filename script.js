@@ -74,9 +74,11 @@ function switchView(viewName) {
     document.getElementById('nav-analysis').classList.toggle('active', viewName === 'analysis');
     document.getElementById('nav-challenge').classList.toggle('active', viewName === 'challenge');
     
+    // Control de visibilidad PC
     const pcControls = document.getElementById('analysis-controls');
     if (pcControls) pcControls.style.display = (viewName === 'analysis' && !isTouchDevice) ? 'flex' : 'none';
     
+    // Control de visibilidad Móvil
     const mobileControls = document.getElementById('mobile-analysis-controls');
     if (mobileControls) mobileControls.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
 
@@ -119,12 +121,14 @@ const btnMarkPoint = document.getElementById('btn-mark-point');
 const btnFloatingReset = document.getElementById('btn-floating-reset');
 const canvasTopControls = document.getElementById('canvas-top-controls');
 const postAnalysisButtons = document.getElementById('post-analysis-buttons');
-const resultActionsBlock = document.getElementById('result-actions-block');
+const resultActionsBlock = document.getElementById('result-actions-block'); // Referencia al nuevo bloque
 
 let lastTouchPos = null;
 
 document.getElementById('mode-foot').addEventListener('click', (e) => setMode('foot', e.target));
 document.getElementById('mode-body').addEventListener('click', (e) => setMode('body', e.target));
+
+// Listeners de botones flotantes (seguridad por si no existen en DOM)
 const btnFloatReset = document.getElementById('btn-float-reset');
 if(btnFloatReset) btnFloatReset.addEventListener('click', resetPoints);
 const btnFloatNew = document.getElementById('btn-float-new');
@@ -145,9 +149,12 @@ if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => {
 if (btnFloatingReset) btnFloatingReset.addEventListener('click', resetPoints);
 
 btnToggleStats.addEventListener('click', () => {
+    // Lógica para mostrar/ocultar la cajita de stats DENTRO del bloque
     if(statsBox.style.display === 'none' || statsBox.style.display === '') {
         statsBox.style.display = 'block';
-        btnToggleStats.innerText = '📊 Ocultar Datos';
+        btnToggleStats.innerText = '🔼 Ocultar Datos';
+        // Auto scroll hacia abajo en móvil por si se tapa
+        if(isTouchDevice) toolsPanel.scrollTop = toolsPanel.scrollHeight;
     } else {
         statsBox.style.display = 'none';
         btnToggleStats.innerText = '📊 Datos';
@@ -208,8 +215,10 @@ function resetPoints() {
     instructionBox.style.display = 'block';
     
     if(canvasTopControls) canvasTopControls.classList.remove('hidden');
+    
+    // OCULTAMOS los paneles finales al reiniciar
     if(postAnalysisButtons) postAnalysisButtons.style.display = 'none';
-    if(resultActionsBlock) resultActionsBlock.style.display = 'none'; // Ocultar bloque acciones
+    if(resultActionsBlock) resultActionsBlock.style.display = 'none'; 
     
     if(zoomLens) zoomLens.style.display = 'none';
 
@@ -270,8 +279,6 @@ if (!isTouchDevice) {
 
         // CASO 1: MODO RESULTADO (STEP 99) -> ZOOM Y PAN DESBLOQUEADO
         if(step >= 99) {
-            // No hacemos preventDefault para permitir gestos si el navegador quisiera, 
-            // pero como tenemos user-scalable=no, lo manejamos nosotros.
             e.preventDefault(); 
             
             if (e.touches.length === 1) {
@@ -555,6 +562,8 @@ function getBodyScaleFactor() {
     if(pts.att && pts.attBody) { const h = Math.sqrt(Math.pow(pts.att.x - pts.attBody.x, 2) + Math.pow(pts.att.y - pts.attBody.y, 2)); if(h > 10) return { factor: REFERENCE_HEIGHT_CM / h, method: "Altura Atacante (1.5m)" }; }
     const avgY = (pts.def.y + pts.att.y) / 2; const screenPct = avgY / canvas.height; const estimatedHeightPx = canvas.height * (0.05 + (screenPct * 0.15)); return { factor: REFERENCE_HEIGHT_CM / estimatedHeightPx, method: "Estimación por Posición" };
 }
+
+// --- FUNCIÓN EVALUAR (AQUÍ ES DONDE APARECEN LOS BOTONES EN PC Y CELU) ---
 btnEvaluate.addEventListener('click', () => {
     step = 99; 
     
@@ -565,9 +574,9 @@ btnEvaluate.addEventListener('click', () => {
     
     if(canvasTopControls) canvasTopControls.classList.add('hidden'); 
     
-    // MOSTRAR NUEVOS PANELES
+    // MOSTRAR NUEVOS PANELES (Esto hace que se vean en PC y Móvil)
     if(postAnalysisButtons) postAnalysisButtons.style.display = 'flex'; 
-    if(resultActionsBlock) resultActionsBlock.style.display = 'flex';
+    if(resultActionsBlock) resultActionsBlock.style.display = 'flex'; // <--- ESTO ES LO QUE FALTABA
 
     const attackRight = document.getElementById('attack-dir-select').value === 'right'; 
     let midY = canvas.height / 2;
