@@ -113,16 +113,9 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-/* BOTONES POST-ANÁLISIS (Nueva Imagen) */
-#post-analysis-buttons {
-    display: none; gap: 10px; width: 100%; margin-top: 10px;
-}
-#mobile-analysis-controls { 
-    display: flex; gap: 10px; width: 100%; justify-content: space-around;
-    margin-top: 5px;
-}
-#mobile-analysis-controls .small-btn {
-    flex: 1; background: #333; color: #ccc; border: 1px solid #555; padding: 10px 0; border-radius: 8px; font-size: 0.9rem;
+/* BOTONES NUEVOS COMPACTOS (Para datos y descarga) */
+.action-btn-compact {
+    padding: 10px; font-size: 0.9rem; border-radius: 8px; font-weight: bold;
 }
 
 /* --- ESTILO LUPA (ZOOM LENS) --- */
@@ -151,47 +144,42 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 #zoom-lens::before { height: 40px; width: 1px; } /* Linea Vertical fina */
 
 
-/* RESULTADOS Y DATOS DE SOFÁ (CENTRADO ARRIBA) */
+/* RESULTADOS (SOLO BADGE ARRIBA) */
 #result-container {
     position: absolute; 
     top: 15px; 
-    right: auto; 
     left: 50%; 
     transform: translateX(-50%);
     z-index: 150;
     display: none; 
-    flex-direction: column; 
-    align-items: center; /* Centrado */
+    align-items: center; justify-content: center;
     pointer-events: none;
-    width: 90%; 
-    max-width: 400px;
+    width: 90%; max-width: 400px;
 }
 #result-badge {
     font-size: 2.5rem; font-weight: 900; padding: 10px 25px; border-radius: 10px;
-    text-transform: uppercase; border: 4px solid white; margin-bottom: 5px; pointer-events: auto;
-    text-align: center; width: 100%; box-sizing: border-box;
+    text-transform: uppercase; border: 4px solid white; 
+    pointer-events: auto;
+    text-align: center; box-sizing: border-box;
     text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    background-color: #333; /* Default fallback */
 }
-.res-offside { background-color: #dc3545; color: white; } .res-onside { background-color: #28a745; color: white; }
+.res-offside { background-color: #dc3545 !important; color: white; } 
+.res-onside { background-color: #28a745 !important; color: white; }
 
-#btn-toggle-stats {
-    background: rgba(0,0,0,0.7); color: #ccc; border: 1px solid #555;
-    font-size: 0.8rem; padding: 5px 15px; border-radius: 20px; margin-bottom: 5px;
-    pointer-events: auto; cursor: pointer;
-}
+/* CAJA DE STATS (Ahora dentro del panel inferior) */
 #sofa-stats-box {
-    background: rgba(0, 0, 0, 0.85); border: 1px solid #444; border-radius: 8px;
-    padding: 15px; margin-bottom: 10px; width: 100%; box-sizing: border-box;
-    display: none; pointer-events: auto; backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.4); border: 1px solid #444; border-radius: 8px;
+    padding: 10px; width: 100%; box-sizing: border-box;
+    display: none; pointer-events: auto; 
 }
-.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 4px;}
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #ddd; border-bottom: 1px solid #444; padding-bottom: 2px;}
 .stat-val { font-weight: bold; color: #ffc107; }
 #sofa-verdict {
-    margin-top: 10px; font-style: italic; color: #fff; font-size: 1rem; text-align: center;
-    font-weight: 600; line-height: 1.4;
+    margin-top: 5px; font-style: italic; color: #fff; font-size: 0.9rem; text-align: center;
+    font-weight: 600; line-height: 1.2;
 }
 
-#btn-download { background: #007bff; color: white; margin-top: 5px; padding: 10px 20px; display: none; pointer-events: auto; width: 100%; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); }
 
 /* --- VISTA CHALLENGE --- */
 #challenge-view { flex: 1; display: flex; background: #1a1a1a; overflow: hidden; }
@@ -242,53 +230,44 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 
     /* PANEL DE HERRAMIENTAS - MÓVIL (FIX PARA QUE NO SE CORTE) */
     #analysis-tools-panel { 
-        /* 1. Usar Fixed para anclar al viewport (la pantalla real) */
         position: fixed;
         bottom: 0; 
         left: 0; 
         width: 100%;
-        
-        /* 2. Resetear el transform que se usa en PC */
         transform: none; 
-        
-        /* 3. Estilo de caja */
         background: rgba(0,0,0,0.95); 
         border-top: 1px solid #444; 
-        
-        /* 4. LAYOUT VERTICAL: Forzamos columna para que NO se pongan al lado */
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 5px; /* Un poco menos de espacio entre botones para que entren mejor */
+        gap: 5px; 
         
-        /* 5. ESPACIO DE SEGURIDAD ABAJO: REDUCIDO DE 50px A 15px */
-        padding: 10px 10px 15px 10px; /* <--- AQUÍ ESTÁ EL CAMBIO */
+        /* 15px de colchón, como pediste */
+        padding: 10px 10px 15px 10px; 
         box-sizing: border-box;
 
-        /* 6. SCROLL: Si la pantalla es muy petisa, que aparezca scroll en vez de cortar */
         max-height: 85vh;
         overflow-y: auto;
-        
-        /* 7. Asegurar que esté por encima */
         z-index: 999;
     }
 
     #instruction-box { font-size: 0.85rem; padding: 8px 10px; margin-bottom: 2px; }
     
-    /* Botón de evaluar un poco más chico para ahorrar espacio */
     #btn-evaluate-big { padding: 12px 20px; font-size: 1.1rem; width: 100%; margin-bottom: 5px; }
     
     #mode-selector { padding: 3px; gap: 0px; }
     .mode-btn { padding: 6px 15px; font-size: 0.8rem; }
     #mobile-analysis-controls .small-btn { padding: 8px 0; font-size: 0.85rem; }
     
-    /* Ajustes específicos para los nuevos controles */
     #btn-float-reset, #btn-float-new {
         padding: 6px 10px; font-size: 0.75rem;
     }
+    
+    /* BADGE MÁS CHICO EN MÓVIL */
     #result-badge {
-        font-size: 1.8rem; 
-        padding: 8px 20px;
+        font-size: 1.5rem; /* Un poco más discreto */
+        padding: 6px 15px;
+        margin-bottom: 0; /* Sin margen extra para ahorrar espacio */
     }
 
     #challenge-content-area { padding: 10px; }
