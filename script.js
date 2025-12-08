@@ -4,7 +4,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- CONFIGURACION DE FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyCXe8AmFFfQDC98A8Z4tXq6oKdbaPOkoJs",
   authDomain: "sofaoffside-ranking.firebaseapp.com",
@@ -14,7 +13,6 @@ const firebaseConfig = {
   messagingSenderId: "937682695294",
 };
 
-// Inicialización segura de Firebase
 let db = null;
 let RANK_COLLECTION = "ranking";
 try {
@@ -24,7 +22,7 @@ try {
 
 
 /* =========================================================================
-   BLOQUE 1: SISTEMA BASE (AUDIO Y NAVEGACIÓN)
+   BLOQUE 1: SISTEMA BASE
    ========================================================================= */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let isMuted = false;
@@ -41,13 +39,11 @@ function playSound(type) {
     if(isMuted) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
     const now = audioCtx.currentTime;
-    
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
     
     if (type === 'pop') {
-        o.frequency.value = 800; 
-        g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        o.frequency.value = 800; g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         o.start(); o.stop(now + 0.1);
     } else if (type === 'whistle') {
         const o1 = audioCtx.createOscillator(), o2 = audioCtx.createOscillator();
@@ -57,55 +53,38 @@ function playSound(type) {
         g.gain.setValueAtTime(0.2, now); g.gain.linearRampToValueAtTime(0, now + 0.4);
         o1.start(now); o1.stop(now + 0.4); o2.start(now); o2.stop(now + 0.4);
     } else if (type === 'tick') {
-        o.type = 'square'; o.frequency.value = 600; 
-        g.gain.setValueAtTime(0.05, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        o.type = 'square'; o.frequency.value = 600; g.gain.setValueAtTime(0.05, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
         o.start(); o.stop(now + 0.05);
     } else if (type === 'beep_low') {
-        o.type = 'sine'; o.frequency.value = 400; 
-        g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.1);
+        o.type = 'sine'; o.frequency.value = 400; g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.1);
         o.start(); o.stop(now + 0.1);
     } else if (type === 'beep_high') {
-        o.type = 'square'; o.frequency.value = 800; 
-        g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.3);
+        o.type = 'square'; o.frequency.value = 800; g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.3);
         o.start(); o.stop(now + 0.3);
     }
 }
 
-// --- NAVEGACIÓN DE PESTAÑAS ---
 document.getElementById('nav-analysis').addEventListener('click', () => switchView('analysis'));
 document.getElementById('nav-challenge').addEventListener('click', () => switchView('challenge'));
 
 function switchView(viewName) {
     if(typeof stopAllTimers === 'function') stopAllTimers();
-    
     document.getElementById('analysis-view').classList.toggle('hidden', viewName !== 'analysis');
     document.getElementById('challenge-view').classList.toggle('hidden', viewName !== 'challenge');
     document.getElementById('nav-analysis').classList.toggle('active', viewName === 'analysis');
     document.getElementById('nav-challenge').classList.toggle('active', viewName === 'challenge');
     
-    // Control de visibilidad de los botones Reiniciar/Nueva Imagen
     const pcControls = document.getElementById('analysis-controls');
-    if (pcControls) {
-        pcControls.style.display = (viewName === 'analysis' && !isTouchDevice) ? 'flex' : 'none';
-    }
-    const mobileControls = document.getElementById('mobile-analysis-controls');
-    if (mobileControls) {
-        mobileControls.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
-    }
-
-    // Control de visibilidad del botón de Marcar Punto
-    const btnMark = document.getElementById('btn-mark-point');
-    if (btnMark) {
-        btnMark.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
-    }
-
-    // Asegurar que la lupa esté apagada al cambiar de vista
-    if(viewName !== 'analysis' && zoomLens) zoomLens.style.display = 'none';
+    if (pcControls) pcControls.style.display = (viewName === 'analysis' && !isTouchDevice) ? 'flex' : 'none';
     
-    if(viewName === 'challenge') { 
-        showChallengeScreen('intro'); 
-        renderRanking(); 
-    }
+    const mobileControls = document.getElementById('mobile-analysis-controls');
+    if (mobileControls) mobileControls.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
+
+    const btnMark = document.getElementById('btn-mark-point');
+    if (btnMark) btnMark.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
+
+    if(viewName !== 'analysis' && zoomLens) zoomLens.style.display = 'none';
+    if(viewName === 'challenge') { showChallengeScreen('intro'); renderRanking(); }
 }
 
 /* =========================================================================
@@ -116,16 +95,15 @@ const COLORS = { guide: '#ffd700', def: '#ff3333', att: '#00ccff', ref: '#cc00ff
 
 let analysisImg = new Image(); 
 let step = 1; 
-let pts = { 
-    p1: null, p2: null, p3: null, p4: null, vp: null,
-    refTop: null, refBot: null, refDepthStart: null, refDepthEnd: null,
-    def: null, defBody: null, defGround: null,
-    att: null, attBody: null, attGround: null 
-};
+let pts = { p1: null, p2: null, p3: null, p4: null, vp: null, refTop: null, refBot: null, refDepthStart: null, refDepthEnd: null, def: null, defBody: null, defGround: null, att: null, attBody: null, attGround: null };
 let markMode = 'foot'; 
 let waitingForRefs = false; 
 let refSubStep = 0; 
 let currentActor = 'def'; 
+
+// --- VARIABLES PARA EL ZOOM/PAN DEL RESULTADO ---
+let cam = { x: 0, y: 0, zoom: 1 }; // Cámara para ver el resultado
+let lastTouchDist = 0; // Para el gesto de pinza
 
 const canvas = document.getElementById('canvas'); 
 const ctx = canvas.getContext('2d');
@@ -139,53 +117,40 @@ const btnToggleStats = document.getElementById('btn-toggle-stats');
 const statsBox = document.getElementById('sofa-stats-box');
 const btnMarkPoint = document.getElementById('btn-mark-point');
 const btnFloatingReset = document.getElementById('btn-floating-reset');
-
-// NUEVAS CONSTANTES PARA LOS BOTONES FLOTANTES
 const canvasTopControls = document.getElementById('canvas-top-controls');
 const postAnalysisButtons = document.getElementById('post-analysis-buttons');
+const resultActionsBlock = document.getElementById('result-actions-block');
 
-// VARIABLE NUEVA PARA MÓVIL: Guarda la posición donde quedó la mira
 let lastTouchPos = null;
 
 document.getElementById('mode-foot').addEventListener('click', (e) => setMode('foot', e.target));
 document.getElementById('mode-body').addEventListener('click', (e) => setMode('body', e.target));
-
-// Listeners para los NUEVOS Botones Superiores (Esquinas)
 const btnFloatReset = document.getElementById('btn-float-reset');
 if(btnFloatReset) btnFloatReset.addEventListener('click', resetPoints);
-
 const btnFloatNew = document.getElementById('btn-float-new');
 if(btnFloatNew) btnFloatNew.addEventListener('click', () => location.reload());
-
-// Listeners para los NUEVOS Botones Inferiores (Post-Análisis)
 const btnPostReset = document.getElementById('btn-post-reset');
 if(btnPostReset) btnPostReset.addEventListener('click', resetPoints);
-
 const btnPostNew = document.getElementById('btn-post-new');
 if(btnPostNew) btnPostNew.addEventListener('click', () => location.reload());
 
-
-// --- CLICK EN BOTÓN MARCAR PUNTO (SOLO MÓVIL) ---
 if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => { 
     if(isTouchDevice && step < 99 && lastTouchPos) {
-        // Usamos la posición "congelada" de la LUPA (no del dedo)
         registerPoint(lastTouchPos);
-        // Borramos la mira de previsualización para que quede solo el punto definitivo
         lastTouchPos = null;
         draw(); 
     }
 });
 
-// Listener botón viejo por si acaso quedó en caché
 if (btnFloatingReset) btnFloatingReset.addEventListener('click', resetPoints);
 
 btnToggleStats.addEventListener('click', () => {
     if(statsBox.style.display === 'none' || statsBox.style.display === '') {
         statsBox.style.display = 'block';
-        btnToggleStats.innerText = '🔼 Ocultar Datos';
+        btnToggleStats.innerText = '📊 Ocultar Datos';
     } else {
         statsBox.style.display = 'none';
-        btnToggleStats.innerText = '📊 Ver Datos de Sofá';
+        btnToggleStats.innerText = '📊 Datos';
     }
 });
 
@@ -203,10 +168,7 @@ function startRefSequence() { waitingForRefs = true; refSubStep = 1; updateUI();
 document.getElementById('file-input').addEventListener('change', (e) => {
     if(e.target.files && e.target.files[0]){
         const reader = new FileReader();
-        reader.onload = (evt) => { 
-            analysisImg.onload = () => initSystem(); 
-            analysisImg.src = evt.target.result; 
-        };
+        reader.onload = (evt) => { analysisImg.onload = () => initSystem(); analysisImg.src = evt.target.result; };
         reader.readAsDataURL(e.target.files[0]);
     }
 });
@@ -216,27 +178,20 @@ function initSystem() {
     document.getElementById('video-picker-view').classList.add('hidden'); 
     document.getElementById('workspace').style.opacity = '1';
     
-    // VISIBILIDAD DE BOTONES
     const pcControls = document.getElementById('analysis-controls');
     if (pcControls) pcControls.style.display = isTouchDevice ? 'none' : 'flex';
-
     const mobileControls = document.getElementById('mobile-analysis-controls');
     if (mobileControls) mobileControls.classList.toggle('hidden', !isTouchDevice);
-
     const btnMark = document.getElementById('btn-mark-point');
     if (btnMark) btnMark.classList.toggle('hidden', !isTouchDevice);
-
     if (btnFloatingReset) btnFloatingReset.classList.remove('hidden');
 
     toolsPanel.style.display = 'flex';
     
-    // Ajuste de canvas a pantalla
     const aspect = analysisImg.width / analysisImg.height;
     let w = document.getElementById('workspace').clientWidth; 
     let h = w / aspect;
-    if(h > document.getElementById('workspace').clientHeight) { 
-        h = document.getElementById('workspace').clientHeight; w = h * aspect; 
-    }
+    if(h > document.getElementById('workspace').clientHeight) { h = document.getElementById('workspace').clientHeight; w = h * aspect; }
     canvas.width = w; canvas.height = h;
     
     resetPoints();
@@ -247,78 +202,59 @@ function resetPoints() {
     pts = { p1:null, p2:null, p3:null, p4:null, vp:null, refTop:null, refBot:null, refDepthStart:null, refDepthEnd:null, def:null, defBody:null, defGround:null, att:null, attBody:null, attGround:null };
     markMode = 'foot';
     lastTouchPos = null; 
+    cam = { x: 0, y: 0, zoom: 1 }; // Reset cámara
 
     toolsPanel.style.display = 'flex';
     instructionBox.style.display = 'block';
     
-    // GESTION DE BOTONES (Nuevo sistema)
-    // Mostramos los botones de arriba (Reiniciar/Nuevo)
     if(canvasTopControls) canvasTopControls.classList.remove('hidden');
-    // Ocultamos los botones de abajo (Post analisis)
     if(postAnalysisButtons) postAnalysisButtons.style.display = 'none';
+    if(resultActionsBlock) resultActionsBlock.style.display = 'none'; // Ocultar bloque acciones
     
     if(zoomLens) zoomLens.style.display = 'none';
 
     setMode('foot', document.getElementById('mode-foot'));
     
-    // Ocultar resultados
     document.getElementById('result-container').style.display = 'none';
     statsBox.style.display = 'none';
-    btnToggleStats.innerText = '📊 Ver Datos de Sofá';
+    btnToggleStats.innerText = '📊 Datos';
     
     btnEvaluate.style.display = 'none';
     modeSelector.style.display = 'none';
     document.getElementById('attack-dir-select').style.display = 'none';
-    btnDownload.style.display = 'none';
-
+    
     if (isTouchDevice && btnMarkPoint) btnMarkPoint.classList.remove('hidden');
     
     draw(); updateUI();
 }
 
-// LISTENERS DE REINICIO
-document.getElementById('btn-new-tools')?.addEventListener('click', () => location.reload()); // MOVIL
-document.getElementById('btn-new')?.addEventListener('click', () => location.reload()); // PC
+document.getElementById('btn-new-tools')?.addEventListener('click', () => location.reload()); 
+document.getElementById('btn-new')?.addEventListener('click', () => location.reload()); 
 
-
-/**
- * Corrige coordenadas del evento al canvas
- */
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width; 
     const scaleY = canvas.height / rect.height;
-    return { 
-        x: (e.clientX - rect.left) * scaleX, 
-        y: (e.clientY - rect.top) * scaleY 
-    };
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
 }
 
 
 // --- LÓGICA DE INTERACCIÓN DEL CANVAS ---
 
 if (!isTouchDevice) {
-    // --- MODO PC (NO TOCAR) ---
+    // --- MODO PC ---
     canvas.addEventListener('mousemove', (e) => {
-        if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) { 
-            zoomLens.style.display = 'none'; return; 
-        }
+        if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) { zoomLens.style.display = 'none'; return; }
         const pos = getPos(e);
-        
         zoomLens.style.display = 'block';
-        zoomLens.style.left = (e.clientX - 70) + 'px'; 
-        zoomLens.style.top = (e.clientY - 70) + 'px';
+        zoomLens.style.left = (e.clientX - 70) + 'px'; zoomLens.style.top = (e.clientY - 70) + 'px';
         zoomLens.style.backgroundImage = `url('${canvas.toDataURL()}')`;
-        
         const zoomFactor = ZOOM_LEVEL;
         zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
-        const bgX = -(pos.x * zoomFactor) + 70;
-        const bgY = -(pos.y * zoomFactor) + 70;
+        const bgX = -(pos.x * zoomFactor) + 70; const bgY = -(pos.y * zoomFactor) + 70;
         zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
     });
-
     canvas.addEventListener('mouseleave', () => { if (zoomLens) zoomLens.style.display = 'none'; });
-    
     canvas.addEventListener('click', (e) => {
         if(document.getElementById('analysis-view').classList.contains('hidden')) return;
         if(step >= 99) return; 
@@ -326,66 +262,91 @@ if (!isTouchDevice) {
     });
     
 } else {
-    // --- MODO MÓVIL (LÓGICA OFFSET / MANGO INVISIBLE) ---
-    
-    // Distancia vertical fija (en píxeles de pantalla) entre el dedo y el centro de la lupa
+    // --- MODO MÓVIL (LUPA vs ZOOM/PAN) ---
     const FINGER_OFFSET_Y = 100;
 
     function handleMobileTouch(e) {
-        if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) return;
-        
+        if(document.getElementById('analysis-view').classList.contains('hidden')) return;
+
+        // CASO 1: MODO RESULTADO (STEP 99) -> ZOOM Y PAN DESBLOQUEADO
+        if(step >= 99) {
+            // No hacemos preventDefault para permitir gestos si el navegador quisiera, 
+            // pero como tenemos user-scalable=no, lo manejamos nosotros.
+            e.preventDefault(); 
+            
+            if (e.touches.length === 1) {
+                // PAN (Arrastre)
+                const touch = e.touches[0];
+                if (lastTouchPos) {
+                    const dx = touch.clientX - lastTouchPos.screenX;
+                    const dy = touch.clientY - lastTouchPos.screenY;
+                    cam.x += dx;
+                    cam.y += dy;
+                    draw();
+                }
+                lastTouchPos = { screenX: touch.clientX, screenY: touch.clientY };
+            } 
+            else if (e.touches.length === 2) {
+                // PINCH (Zoom)
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                
+                if (lastTouchDist) {
+                    const delta = dist - lastTouchDist;
+                    const zoomSpeed = 0.005;
+                    cam.zoom += delta * zoomSpeed;
+                    if(cam.zoom < 0.5) cam.zoom = 0.5; // Limite mínimo
+                    if(cam.zoom > 5) cam.zoom = 5;     // Limite máximo
+                    draw();
+                }
+                lastTouchDist = dist;
+            }
+            return; 
+        }
+
+        // CASO 2: MODO DIBUJO (STEP < 99) -> LUPA
         const touch = e.touches[0];
-        
-        // 1. Calcular el punto OBJETIVO
         let targetScreenX = touch.clientX;
         let targetScreenY = touch.clientY - FINGER_OFFSET_Y;
 
-        // 2. Convertir a coordenadas Canvas
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width; 
         const scaleY = canvas.height / rect.height;
-        
         let canvasX = (targetScreenX - rect.left) * scaleX;
         let canvasY = (targetScreenY - rect.top) * scaleY;
 
-        // 3. CLAMP (Limitar)
-        if (canvasX < 0) canvasX = 0;
-        if (canvasX > canvas.width) canvasX = canvas.width;
-        if (canvasY < 0) canvasY = 0;
-        if (canvasY > canvas.height) canvasY = canvas.height;
+        if (canvasX < 0) canvasX = 0; if (canvasX > canvas.width) canvasX = canvas.width;
+        if (canvasY < 0) canvasY = 0; if (canvasY > canvas.height) canvasY = canvas.height;
 
-        // 4. Guardar posición
         lastTouchPos = { x: canvasX, y: canvasY };
-
-        // --- INICIO DEL TRUCO ---
-        // A) Dibujamos el canvas LIMPIO (sin la cruz roja) para sacar la foto
         draw(true); 
 
-        // 5. Mover la lupa visualmente
         let finalScreenX = (canvasX / scaleX) + rect.left;
         let finalScreenY = (canvasY / scaleY) + rect.top;
 
         zoomLens.style.display = 'block';
-        zoomLens.style.left = (finalScreenX - 70) + 'px'; 
-        zoomLens.style.top = (finalScreenY - 70) + 'px'; 
-
-        // 6. Configurar la imagen interna de la lupa (Ahora tomará la foto LIMPIA)
+        zoomLens.style.left = (finalScreenX - 70) + 'px'; zoomLens.style.top = (finalScreenY - 70) + 'px'; 
         zoomLens.style.backgroundImage = `url('${canvas.toDataURL()}')`;
         const zoomFactor = ZOOM_LEVEL;
         zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
-        
-        const bgX = -(canvasX * zoomFactor) + 70;
-        const bgY = -(canvasY * zoomFactor) + 70;
+        const bgX = -(canvasX * zoomFactor) + 70; const bgY = -(canvasY * zoomFactor) + 70;
         zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
-        
-        // B) Ahora sí, volvemos a dibujar la cruz roja en el canvas real para que el usuario la vea
         draw(false); 
-        // --- FIN DEL TRUCO ---
     }
 
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault(); 
-        handleMobileTouch(e);
+        if(step >= 99) {
+            // Reiniciar referencias para el gesto
+            if(e.touches.length === 1) {
+                lastTouchPos = { screenX: e.touches[0].clientX, screenY: e.touches[0].clientY };
+            } else if (e.touches.length === 2) {
+                lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            }
+        } else {
+             handleMobileTouch(e);
+        }
     });
 
     canvas.addEventListener('touchmove', (e) => {
@@ -395,17 +356,20 @@ if (!isTouchDevice) {
 
     canvas.addEventListener('touchend', (e) => {
         e.preventDefault();
-        // Al soltar, ocultamos la lupa pero lastTouchPos queda guardado.
-        // El draw() se encargará de dibujar la cruz roja en lastTouchPos.
-        zoomLens.style.display = 'none';
-        draw();
+        if(step < 99) {
+            zoomLens.style.display = 'none';
+            draw();
+        } else {
+            // Al soltar en modo zoom, reseteamos distancias
+            lastTouchDist = 0;
+            lastTouchPos = null;
+        }
     });
 }
 
 
 function registerPoint(p) {
     playSound('pop');
-
     if(step === 1) { pts.p1 = p; step++; }
     else if(step === 2) { pts.p2 = p; step++; }
     else if(step === 3) { pts.p3 = p; step++; }
@@ -466,15 +430,12 @@ function calculateIntersection(pShoulder, pFoot) {
     let dxV = pts.refBot.x - pts.refTop.x;
     if(Math.abs(dxV) < 0.0001) dxV = 0.0001;
     let mV = dyV / dxV;
-
     let dyD = pts.refDepthEnd.y - pts.refDepthStart.y;
     let dxD = pts.refDepthEnd.x - pts.refDepthStart.x;
     if(Math.abs(dxD) < 0.0001) dxD = 0.0001;
     let mD = dyD / dxD;
-
     let b1 = pShoulder.y - mV * pShoulder.x;
     let b2 = pFoot.y - mD * pFoot.x;
-
     if(Math.abs(mV - mD) < 0.01) return pFoot; 
     let x = (b2 - b1) / (mV - mD);
     let y = mV * x + b1;
@@ -486,6 +447,17 @@ function draw(skipCrosshair = false) {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     ctx.save();
+    
+    // APLICAR TRANSFORMACIÓN DE CÁMARA (ZOOM/PAN) SOLO SI STEP >= 99
+    if (step >= 99) {
+        // Centrar el zoom en el medio del canvas para que sea más natural
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.scale(cam.zoom, cam.zoom);
+        ctx.translate(-canvas.width/2, -canvas.height/2);
+        
+        // Aplicar paneo
+        ctx.translate(cam.x, cam.y);
+    }
     
     // 1. Dibujar la imagen
     ctx.drawImage(analysisImg, 0, 0, canvas.width, canvas.height);
@@ -535,23 +507,16 @@ function draw(skipCrosshair = false) {
 }
 
 function drawCrosshair(x, y) {
-    ctx.save();
-    ctx.strokeStyle = '#ff0000'; // ROJO
-    ctx.lineWidth = 1; // 1px
-    ctx.beginPath();
-    // Dibujar cruz de 20px de tamaño total
-    ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y); 
-    ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 10);
-    ctx.stroke();
-    ctx.restore();
+    ctx.save(); ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y); ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 10);
+    ctx.stroke(); ctx.restore();
 }
 
 function drawOffsideLineToVP(p, c) {
     let m = (pts.vp.y - p.y) / (pts.vp.x - p.x);
     let b = p.y - m * p.x;
     ctx.beginPath();
-    ctx.moveTo(0, b); 
-    ctx.lineTo(canvas.width, m * canvas.width + b);
+    ctx.moveTo(0, b); ctx.lineTo(canvas.width, m * canvas.width + b);
     ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.stroke();
 }
 function drawDot(p, c) { ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fillStyle=c; ctx.fill(); ctx.stroke(); }
@@ -593,15 +558,16 @@ function getBodyScaleFactor() {
 btnEvaluate.addEventListener('click', () => {
     step = 99; 
     
-    // GESTION DE BOTONES AL TERMINAR (NUEVO)
+    // UI MANAGEMENT
     instructionBox.style.display = 'none'; 
     document.getElementById('attack-dir-select').style.display = 'none';
     btnEvaluate.style.display = 'none';
     
-    // Ocultamos botones flotantes de arriba
     if(canvasTopControls) canvasTopControls.classList.add('hidden'); 
-    // Mostramos botones de acción abajo
+    
+    // MOSTRAR NUEVOS PANELES
     if(postAnalysisButtons) postAnalysisButtons.style.display = 'flex'; 
+    if(resultActionsBlock) resultActionsBlock.style.display = 'flex';
 
     const attackRight = document.getElementById('attack-dir-select').value === 'right'; 
     let midY = canvas.height / 2;
@@ -612,7 +578,6 @@ btnEvaluate.addEventListener('click', () => {
     
     draw(); 
     document.getElementById('result-container').style.display = 'flex'; 
-    document.getElementById('btn-download').style.display = 'block'; 
     
     const badge = document.getElementById('result-badge'); badge.className = isOffside ? 'res-offside' : 'res-onside'; badge.innerText = isOffside ? "OFFSIDE" : "HABILITADO";
     const scaleData = getBodyScaleFactor(); const TELEPHOTO_COMPRESSION = 0.4; const distCm = (distPx * scaleData.factor * TELEPHOTO_COMPRESSION).toFixed(1);
@@ -632,12 +597,18 @@ btnEvaluate.addEventListener('click', () => {
     }
 });
 btnDownload.addEventListener('click', () => {
+    // 1. Ocultar badges para dibujar limpio
     document.getElementById('result-container').style.display = 'none'; 
+    
+    // 2. Guardar estado de la cámara y resetear para descargar la FOTO ENTERA
+    const savedCam = { ...cam };
+    cam = { x: 0, y: 0, zoom: 1 };
     draw();
+
     const w = canvas.width, h = canvas.height; 
     ctx.save(); 
     
-    // --- FIX DESCARGA IMAGEN ---
+    // TEXTOS DE MARCA DE AGUA
     const smallFont = Math.max(10, Math.round(w * 0.025)); 
     const bigFont = Math.max(16, Math.round(w * 0.04));    
     const margin = Math.round(w * 0.02);
@@ -665,10 +636,16 @@ btnDownload.addEventListener('click', () => {
     ctx.fillText(resText, margin, h - margin);
     
     ctx.restore(); 
+    
+    // Descarga
     const link = document.createElement('a'); 
     link.download = `analisis-${resText.toLowerCase()}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.9); 
     link.click();
+
+    // 3. Restaurar estado de cámara y UI
+    cam = savedCam;
+    draw();
     document.getElementById('result-container').style.display = 'flex';
 });
 
