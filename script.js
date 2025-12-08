@@ -156,9 +156,9 @@ document.getElementById('mode-body').addEventListener('click', (e) => setMode('b
 // --- CLICK EN BOTÓN MARCAR PUNTO (SOLO MÓVIL) ---
 if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => { 
     if(isTouchDevice && step < 99 && lastTouchPos) {
-        // Usamos la posición "congelada" de la mira roja
+        // Usamos la posición "congelada" de la LUPA (no del dedo)
         registerPoint(lastTouchPos);
-        // Opcional: Borrar la mira después de marcar para que no confunda
+        // Opcional: Borrar la mira después de marcar
         lastTouchPos = null;
         draw(); 
     }
@@ -233,7 +233,7 @@ function resetPoints() {
     step = 1; waitingForRefs = false; refSubStep = 0; currentActor = 'def';
     pts = { p1:null, p2:null, p3:null, p4:null, vp:null, refTop:null, refBot:null, refDepthStart:null, refDepthEnd:null, def:null, defBody:null, defGround:null, att:null, attBody:null, attGround:null };
     markMode = 'foot';
-    lastTouchPos = null; // Reiniciar mira móvil
+    lastTouchPos = null; 
 
     toolsPanel.style.display = 'flex';
     instructionBox.style.display = 'block';
@@ -276,7 +276,7 @@ function getPos(e) {
 // --- LÓGICA DE INTERACCIÓN DEL CANVAS ---
 
 if (!isTouchDevice) {
-    // --- MODO PC (NO TOCAR, YA FUNCIONA BIEN) ---
+    // --- MODO PC (NO TOCAR) ---
     canvas.addEventListener('mousemove', (e) => {
         if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) { 
             zoomLens.style.display = 'none'; return; 
@@ -304,47 +304,59 @@ if (!isTouchDevice) {
     });
     
 } else {
-    // --- MODO MÓVIL (LÓGICA SATÉLITE) ---
+    // --- MODO MÓVIL (LÓGICA OFFSET / MANGO INVISIBLE) ---
     
-    // Función para manejar el movimiento del dedo y la lupa
+    // Distancia vertical fija (en píxeles de pantalla) entre el dedo y el centro de la lupa
+    const FINGER_OFFSET_Y = 100;
+
     function handleMobileTouch(e) {
         if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) return;
         
         const touch = e.touches[0];
-        const pos = getPos(touch); // Posición real en el canvas
-        lastTouchPos = pos; // Guardamos dónde está el dedo para dibujar la mira y marcar
         
-        // 1. Mostrar Lupa
+        // 1. Calcular el punto OBJETIVO (donde va a estar la lupa)
+        // El objetivo es el X del dedo, pero Y - Offset (más arriba)
+        let targetScreenX = touch.clientX;
+        let targetScreenY = touch.clientY - FINGER_OFFSET_Y;
+
+        // 2. Convertir ese punto de pantalla a coordenadas del Canvas (para saber qué pixel de la foto es)
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width; 
+        const scaleY = canvas.height / rect.height;
+        
+        let canvasX = (targetScreenX - rect.left) * scaleX;
+        let canvasY = (targetScreenY - rect.top) * scaleY;
+
+        // 3. CLAMP (Limitar): Asegurar que el punto objetivo no se salga de la foto
+        if (canvasX < 0) canvasX = 0;
+        if (canvasX > canvas.width) canvasX = canvas.width;
+        if (canvasY < 0) canvasY = 0;
+        if (canvasY > canvas.height) canvasY = canvas.height;
+
+        // 4. Guardar este punto como el "Elegido" para cuando suelte el dedo
+        lastTouchPos = { x: canvasX, y: canvasY };
+
+        // 5. Mover la lupa visualmente
+        // Convertimos el punto canvas "clampeado" de vuelta a pixeles de pantalla para ubicar el div
+        let finalScreenX = (canvasX / scaleX) + rect.left;
+        let finalScreenY = (canvasY / scaleY) + rect.top;
+
         zoomLens.style.display = 'block';
-        
-        // 2. Configurar imagen de la lupa (el canvas actual)
+        zoomLens.style.left = (finalScreenX - 70) + 'px'; // Centrar el div
+        zoomLens.style.top = (finalScreenY - 70) + 'px';  // Centrar el div (puede irse negativo y recortarse, está bien)
+
+        // 6. Configurar la imagen interna de la lupa
         zoomLens.style.backgroundImage = `url('${canvas.toDataURL()}')`;
         const zoomFactor = ZOOM_LEVEL;
         zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
         
-        // 3. Posicionar el fondo para que coincida con el dedo
-        const bgX = -(pos.x * zoomFactor) + 70; // 70 es la mitad de 140px (ancho lupa)
-        const bgY = -(pos.y * zoomFactor) + 70;
+        const bgX = -(canvasX * zoomFactor) + 70;
+        const bgY = -(canvasY * zoomFactor) + 70;
         zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
-        
-        // 4. Posicionar la Lupa FLOTANTE (Satélite)
-        // Por defecto, la ponemos 100px ARRIBA del dedo para que se vea
-        let lensTop = touch.clientY - 160; 
-        let lensLeft = touch.clientX - 70; // Centrada horizontalmente con el dedo
-        
-        // Si el dedo está muy arriba (cerca del borde superior), mover la lupa ABAJO del dedo
-        if (touch.clientY < 180) {
-            lensTop = touch.clientY + 50; 
-        }
-
-        zoomLens.style.top = lensTop + 'px';
-        zoomLens.style.left = lensLeft + 'px';
-        
-        draw(); // Redibujamos para ver la mira roja en el canvas
     }
 
     canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Evitar scroll
+        e.preventDefault(); 
         handleMobileTouch(e);
     });
 
@@ -355,8 +367,7 @@ if (!isTouchDevice) {
 
     canvas.addEventListener('touchend', (e) => {
         e.preventDefault();
-        // Al soltar, NO borramos lastTouchPos, para que la mira quede "congelada"
-        // Solo ocultamos la lupa grande para limpiar la vista
+        // Al soltar, ocultamos la lupa pero lastTouchPos queda guardado para el botón "Marcar"
         zoomLens.style.display = 'none';
     });
 }
@@ -484,29 +495,9 @@ function draw() {
         drawOffsideLineToVP(pts.def, COLORS.def);
         drawOffsideLineToVP(pts.att, COLORS.att);
     }
-
-    // 3. DIBUJAR MIRA MÓVIL (CROSSHAIR) si hay posición guardada
-    if (isTouchDevice && lastTouchPos && step < 99) {
-        drawCrosshair(lastTouchPos.x, lastTouchPos.y);
-    }
-
-    ctx.restore();
-}
-
-function drawCrosshair(x, y) {
-    ctx.save();
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x - 15, y); ctx.lineTo(x + 15, y);
-    ctx.moveTo(x, y - 15); ctx.lineTo(x, y + 15);
-    ctx.stroke();
     
-    // Circulito centro
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.strokeStyle = 'white';
-    ctx.stroke();
+    // NOTA: Ya no dibujamos "Crosshair" aquí porque la lupa ya tiene su cruz en CSS
+
     ctx.restore();
 }
 
