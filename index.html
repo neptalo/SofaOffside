@@ -42,6 +42,7 @@
             
             <div id="analysis-tools-panel">
                 <div id="instruction-box">Cargando instrucciones...</div>
+                
                 <button id="btn-mark-point" class="big-upload-btn hidden" style="background:#ffc107; color:black; padding: 15px; font-size: 1.2rem; border-radius: 8px; width: 100%;">🎯 MARCAR PUNTO</button>
                 
                 <div id="mode-selector">
@@ -56,27 +57,27 @@
 
                 <button id="btn-evaluate-big">🔍 ANALIZAR OFFSIDE</button>
 
-                <div id="post-analysis-buttons" style="display:none; gap:10px; width:100%; margin-top:10px;">
+                <div id="result-actions-block" style="display:none; width:100%; flex-direction:column; gap:8px;">
+                     <div style="display: flex; gap: 8px; width: 100%;">
+                        <button id="btn-toggle-stats" class="action-btn-compact" style="background:#333; color:#ccc; border:1px solid #555;">📊 Datos</button>
+                        <button id="btn-download" class="action-btn-compact" style="background:#007bff; color:white; flex:2;">⬇ Descargar Imagen</button>
+                    </div>
+                    <div id="sofa-stats-box">
+                        <div class="stat-row"><span>Distancia:</span> <span class="stat-val" id="stat-dist">--</span></div>
+                        <div class="stat-row"><span>Píxeles:</span> <span class="stat-val" id="stat-px">--</span></div>
+                        <div class="stat-row"><span>Método:</span> <span class="stat-val" id="stat-ref" style="color:#aaa; font-weight:normal; font-size:0.8rem;">--</span></div>
+                        <div id="sofa-verdict">...</div>
+                    </div>
+                </div>
+
+                <div id="post-analysis-buttons" style="display:none; gap:10px; width:100%; margin-top:5px;">
                     <button id="btn-post-reset" class="big-upload-btn" style="background: #ffc107; color: black; flex:1; font-size:1rem; padding:10px;">🔄 Reiniciar</button>
                     <button id="btn-post-new" class="big-upload-btn" style="background: #555; color: white; flex:1; font-size:1rem; padding:10px;">📂 Nueva</button>
                 </div>
-
-                <div id="mobile-analysis-controls" class="hidden">
-                    </div>
             </div>
 
             <div id="result-container">
                 <div id="result-badge"></div>
-                <button id="btn-toggle-stats">📊 Ver Datos de Sofá</button>
-                
-                <div id="sofa-stats-box">
-                    <div class="stat-row"><span>Distancia Estimada:</span> <span class="stat-val" id="stat-dist">--</span></div>
-                    <div class="stat-row"><span>Pixelaje:</span> <span class="stat-val" id="stat-px">--</span></div>
-                    <div class="stat-row"><span>Referencia:</span> <span class="stat-val" id="stat-ref" style="color:#aaa; font-weight:normal;">--</span></div>
-                    <div id="sofa-verdict">"Calculando..."</div>
-                </div>
-
-                <div id="result-buttons"><button id="btn-download">⬇ Descargar Imagen</button></div>
             </div>
         </div>
         <div id="zoom-lens"></div>
