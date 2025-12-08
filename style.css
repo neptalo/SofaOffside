@@ -1,5 +1,5 @@
 /* =========================================
-   ESTILOS (CSS) - FIX LUPA SATÉLITE MÓVIL
+   ESTILOS (CSS) - FIX LUPA OFFSET (MANGO INVISIBLE)
    ========================================= */
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -113,27 +113,31 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     flex: 1; background: #333; color: #ccc; border: 1px solid #555; padding: 10px 0; border-radius: 8px; font-size: 0.9rem;
 }
 
-/* --- ESTILO LUPA (ZOOM LENS) MODIFICADO --- */
+/* --- ESTILO LUPA (ZOOM LENS) --- */
 #zoom-lens {
     position: fixed; 
     width: 140px; height: 140px; 
     border-radius: 50%; 
-    border: 3px solid #ffc107; /* Borde amarillo para destacar */
+    border: 2px solid #00ffff; /* Borde Cyan para combinar con la mira */
     overflow: hidden; 
     display: none; 
-    pointer-events: none; /* Importante: que el dedo 'atraviese' la lupa */
+    pointer-events: none; 
     z-index: 999;
     background-color: #000; 
     background-repeat: no-repeat; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
-/* Mira central de la lupa */
+/* MIRA FINA (CRUZ) CENTRADA EN LUPA */
 #zoom-lens::after, #zoom-lens::before {
-    content: ''; position: absolute; background: rgba(255, 50, 50, 0.9); top: 50%; left: 50%; transform: translate(-50%, -50%);
+    content: ''; position: absolute; 
+    background: #00ffff; /* COLOR CYAN FINITO */
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    box-shadow: 0 0 2px rgba(0,0,0,0.8); /* Sombrita para ver en fondo claro */
 }
-#zoom-lens::after { width: 30px; height: 2px; } 
-#zoom-lens::before { height: 30px; width: 2px; }
+#zoom-lens::after { width: 40px; height: 1px; } /* Linea Horizontal fina */
+#zoom-lens::before { height: 40px; width: 1px; } /* Linea Vertical fina */
+
 
 /* RESULTADOS Y DATOS DE SOFÁ */
 #result-container {
@@ -241,3 +245,4 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
         padding-right: 5px; white-space: nowrap; 
     }
 }
+
