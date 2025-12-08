@@ -13,7 +13,11 @@
         <div class="controls">
             <button id="nav-analysis" class="nav-btn active">⚽ Análisis</button>
             <button id="nav-challenge" class="nav-btn">🏆 Challenge</button>
+            
+            <div id="analysis-controls" style="display: flex; gap: 10px; align-items: center;">
+                <button id="btn-new" onclick="location.reload()">Nueva Imagen</button>
             </div>
+        </div>
     </div>
 
     <div id="analysis-view">
@@ -23,80 +27,54 @@
             <div class="logo" style="font-size: 3rem; margin-bottom: 20px;">
                 <span class="sofa">Sofa</span><span class="offside">Offside</span>
             </div>
+            <p>Herramienta de precisión para árbitros de sillón.</p>
             
-            <p style="color: #aaa; margin-bottom: 30px; font-size: 1.1rem;">Herramienta de precisión para árbitros de sillón.</p>
+            <label for="file-input" class="big-upload-btn">📂 SUBIR IMAGEN</label>
+            <input type="file" id="file-input" accept="image/*">
 
-            <label class="big-upload-btn">
-                📸 Subir Foto
-                <input type="file" id="file-input" accept="image/*">
-            </label>
-            
-            <label class="big-upload-btn" id="btn-upload-video">
-                🎥 Subir Video
-                <input type="file" id="video-input" accept="video/*">
-            </label>
+            <label for="video-input" class="big-upload-btn" id="btn-upload-video">🎬 SUBIR VIDEO</label>
+            <input type="file" id="video-input" accept="video/*">
         </div>
-
-        <div id="video-picker-view" class="hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background:#000; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <video id="main-video" controls style="max-width:100%; max-height:70vh; margin-bottom:10px;"></video>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <button id="btn-seek-back" style="background:#444; color:white;">⏪ -0.05s</button>
-                <button id="btn-seek-fwd" style="background:#444; color:white;">+0.05s ⏩</button>
-            </div>
-            <div style="display:flex; gap:20px;">
-                <button id="btn-capture-frame" style="background:#28a745; color:white; padding:15px 30px; font-size:1.2rem;">📸 USAR ESTA IMAGEN</button>
-                <button onclick="closeVideoPicker()" style="background:#dc3545; color:white;">CANCELAR</button>
-            </div>
-        </div>
-
         <div id="workspace">
             <canvas id="canvas"></canvas>
             
-            <div id="canvas-top-controls">
-                <button id="btn-float-reset">🔄 Reiniciar Análisis</button>
-                <button id="btn-float-new">📂 Nueva Imagen</button>
+            <button id="btn-floating-reset" class="hidden">🔄 Reiniciar Puntos</button>
+            
+            <div id="analysis-tools-panel">
+                <div id="instruction-box">Cargando instrucciones...</div>
+                <button id="btn-mark-point" class="big-upload-btn hidden" style="background:#ffc107; color:black; padding: 15px; font-size: 1.2rem; border-radius: 8px; width: 100%;">🎯 MARCAR PUNTO</button>
+                
+                <div id="mode-selector">
+                    <button id="mode-foot" class="mode-btn active">🦶 Pie</button>
+                    <button id="mode-body" class="mode-btn">👕 Cuerpo</button>
+                </div>
+                
+                <select id="attack-dir-select" style="display:none; padding:10px; border-radius:5px; font-size:1rem;">
+                    <option value="right">El Ataque va hacia la DERECHA &rarr;</option>
+                    <option value="left">&larr; El Ataque va hacia la IZQUIERDA</option>
+                </select>
+
+                <button id="btn-evaluate-big">🔍 ANALIZAR OFFSIDE</button>
+
+                <div id="mobile-analysis-controls" class="hidden">
+                    <button id="btn-new-tools" class="small-btn">📂 Nueva Imagen</button>
+                </div>
             </div>
 
             <div id="result-container">
-                <div id="result-badge">OFFSIDE</div>
-                <div id="sofa-verdict">"Comentario..."</div>
+                <div id="result-badge"></div>
                 <button id="btn-toggle-stats">📊 Ver Datos de Sofá</button>
+                
                 <div id="sofa-stats-box">
-                    <div class="stat-row"><span>Distancia:</span> <span id="stat-dist" class="stat-val">--</span></div>
-                    <div class="stat-row"><span>Píxeles:</span> <span id="stat-px" class="stat-val">--</span></div>
-                    <div class="stat-row"><span>Referencia:</span> <span id="stat-ref" class="stat-val">--</span></div>
+                    <div class="stat-row"><span>Distancia Estimada:</span> <span class="stat-val" id="stat-dist">--</span></div>
+                    <div class="stat-row"><span>Pixelaje:</span> <span class="stat-val" id="stat-px">--</span></div>
+                    <div class="stat-row"><span>Referencia:</span> <span class="stat-val" id="stat-ref" style="color:#aaa; font-weight:normal;">--</span></div>
+                    <div id="sofa-verdict">"Calculando..."</div>
                 </div>
-                <button id="btn-download">💾 Descargar Imagen</button>
+
+                <div id="result-buttons"><button id="btn-download">⬇ Descargar Imagen</button></div>
             </div>
         </div>
-
-        <div id="zoom-lens"></div>
-
-        <div id="analysis-tools-panel">
-            <div id="instruction-box">Selecciona un punto...</div>
-            
-            <div id="mode-selector">
-                <button id="mode-foot" class="mode-btn active">🦶 Pie</button>
-                <button id="mode-body" class="mode-btn">👤 Cuerpo/Cabeza</button>
-            </div>
-
-            <select id="attack-dir-select" style="display:none; padding: 10px; border-radius: 5px; background: #333; color: white; border: 1px solid #555;">
-                <option value="right">Ataque hacia DERECHA ➡️</option>
-                <option value="left">⬅️ Ataque hacia IZQUIERDA</option>
-            </select>
-
-            <button id="btn-evaluate-big">⚖️ ANALIZAR JUGADA</button>
-            
-            <div id="post-analysis-buttons" style="display:none; gap:10px; width:100%;">
-                <button id="btn-post-reset" style="background: #ffc107; color: black; flex:1;">🔄 Reiniciar Análisis</button>
-                <button id="btn-post-new" style="background: #555; color: white; flex:1;">📂 Nueva Imagen</button>
-            </div>
-
-            <div id="mobile-analysis-controls" class="hidden">
-                 <button id="btn-mark-point" class="small-btn" style="background: #ffc107; color: #000; font-weight: bold; font-size: 1rem; padding: 15px 0;">📍 MARCAR PUNTO</button>
-            </div>
-        </div>
-    </div>
         <div id="zoom-lens"></div>
 
         <div id="video-picker-view" class="hidden">
@@ -166,5 +144,4 @@
 
 <script type="module" src="script.js"></script>
 </body>
-
 </html>
