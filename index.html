@@ -57,10 +57,10 @@
 
                 <button id="btn-evaluate-big">🔍 ANALIZAR OFFSIDE</button>
 
-                <div id="result-actions-block" style="display:none; width:100%; flex-direction:column; gap:8px;">
-                     <div style="display: flex; gap: 8px; width: 100%;">
-                        <button id="btn-toggle-stats" class="action-btn-compact" style="background:#333; color:#ccc; border:1px solid #555;">📊 Datos</button>
-                        <button id="btn-download" class="action-btn-compact" style="background:#007bff; color:white; flex:2;">⬇ Descargar Imagen</button>
+                <div id="result-actions-block">
+                     <div class="actions-row">
+                        <button id="btn-toggle-stats" class="action-btn-compact btn-dark">📊 Datos</button>
+                        <button id="btn-download" class="action-btn-compact btn-blue">⬇ Descargar Imagen</button>
                     </div>
                     <div id="sofa-stats-box">
                         <div class="stat-row"><span>Distancia:</span> <span class="stat-val" id="stat-dist">--</span></div>
@@ -70,7 +70,7 @@
                     </div>
                 </div>
 
-                <div id="post-analysis-buttons" style="display:none; gap:10px; width:100%; margin-top:5px;">
+                <div id="post-analysis-buttons">
                     <button id="btn-post-reset" class="big-upload-btn" style="background: #ffc107; color: black; flex:1; font-size:1rem; padding:10px;">🔄 Reiniciar</button>
                     <button id="btn-post-new" class="big-upload-btn" style="background: #555; color: white; flex:1; font-size:1rem; padding:10px;">📂 Nueva</button>
                 </div>
