@@ -83,7 +83,7 @@ function switchView(viewName) {
     document.getElementById('nav-analysis').classList.toggle('active', viewName === 'analysis');
     document.getElementById('nav-challenge').classList.toggle('active', viewName === 'challenge');
     
-    // Control de visibilidad de los botones Reiniciar/Nueva Imagen
+    // Control de visibilidad de los botones Reiniciar/Nueva Imagen (Antiguos)
     const pcControls = document.getElementById('analysis-controls');
     if (pcControls) {
         pcControls.style.display = (viewName === 'analysis' && !isTouchDevice) ? 'flex' : 'none';
@@ -99,7 +99,7 @@ function switchView(viewName) {
         btnMark.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
     }
 
-    // Control de visibilidad del botón de Reinicio Flotante
+    // Control de visibilidad del botón de Reinicio Flotante (Viejo, por compatibilidad)
     const btnFloatingReset = document.getElementById('btn-floating-reset');
     if (btnFloatingReset) {
          const isStartScreen = document.getElementById('start-screen').style.display !== 'none';
@@ -147,11 +147,30 @@ const statsBox = document.getElementById('sofa-stats-box');
 const btnMarkPoint = document.getElementById('btn-mark-point');
 const btnFloatingReset = document.getElementById('btn-floating-reset');
 
+// NUEVAS CONSTANTES PARA LOS BOTONES FLOTANTES
+const canvasTopControls = document.getElementById('canvas-top-controls');
+const postAnalysisButtons = document.getElementById('post-analysis-buttons');
+
 // VARIABLE NUEVA PARA MÓVIL: Guarda la posición donde quedó la mira
 let lastTouchPos = null;
 
 document.getElementById('mode-foot').addEventListener('click', (e) => setMode('foot', e.target));
 document.getElementById('mode-body').addEventListener('click', (e) => setMode('body', e.target));
+
+// Listeners para los NUEVOS Botones Superiores (Esquinas)
+const btnFloatReset = document.getElementById('btn-float-reset');
+if(btnFloatReset) btnFloatReset.addEventListener('click', resetPoints);
+
+const btnFloatNew = document.getElementById('btn-float-new');
+if(btnFloatNew) btnFloatNew.addEventListener('click', () => location.reload());
+
+// Listeners para los NUEVOS Botones Inferiores (Post-Análisis)
+const btnPostReset = document.getElementById('btn-post-reset');
+if(btnPostReset) btnPostReset.addEventListener('click', resetPoints);
+
+const btnPostNew = document.getElementById('btn-post-new');
+if(btnPostNew) btnPostNew.addEventListener('click', () => location.reload());
+
 
 // --- CLICK EN BOTÓN MARCAR PUNTO (SOLO MÓVIL) ---
 if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => { 
@@ -164,6 +183,7 @@ if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => {
     }
 });
 
+// Listener botón viejo por si acaso quedó en caché
 if (btnFloatingReset) btnFloatingReset.addEventListener('click', resetPoints);
 
 btnToggleStats.addEventListener('click', () => {
@@ -237,9 +257,18 @@ function resetPoints() {
 
     toolsPanel.style.display = 'flex';
     instructionBox.style.display = 'block';
+    
+    // GESTION DE BOTONES (Nuevo sistema)
+    // Mostramos los botones de arriba (Reiniciar/Nuevo)
+    if(canvasTopControls) canvasTopControls.style.display = 'block';
+    // Ocultamos los botones de abajo (Post analisis)
+    if(postAnalysisButtons) postAnalysisButtons.style.display = 'none';
+    
     if(zoomLens) zoomLens.style.display = 'none';
 
     setMode('foot', document.getElementById('mode-foot'));
+    
+    // Ocultar resultados
     document.getElementById('result-container').style.display = 'none';
     statsBox.style.display = 'none';
     btnToggleStats.innerText = '📊 Ver Datos de Sofá';
@@ -309,7 +338,7 @@ if (!isTouchDevice) {
     // Distancia vertical fija (en píxeles de pantalla) entre el dedo y el centro de la lupa
     const FINGER_OFFSET_Y = 100;
 
-function handleMobileTouch(e) {
+    function handleMobileTouch(e) {
         if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) return;
         
         const touch = e.touches[0];
@@ -459,8 +488,8 @@ function calculateIntersection(pShoulder, pFoot) {
     return {x: x, y: y};
 }
 
-// --- FUNCIÓN DE DIBUJO MODIFICADA ---
-function draw(skipCrosshair = false) { // <--- CAMBIO 1: Agregamos el parámetro
+// --- FUNCIÓN DE DIBUJO ---
+function draw(skipCrosshair = false) { 
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     ctx.save();
@@ -505,7 +534,6 @@ function draw(skipCrosshair = false) { // <--- CAMBIO 1: Agregamos el parámetro
     }
     
     // 3. DIBUJAR MIRA (Solo si NO estamos en modo skip y hay posición)
-    // <--- CAMBIO 2: Agregamos el chequeo !skipCrosshair
     if (!skipCrosshair && isTouchDevice && lastTouchPos && step < 99) {
         drawCrosshair(lastTouchPos.x, lastTouchPos.y);
     }
@@ -570,12 +598,29 @@ function getBodyScaleFactor() {
     const avgY = (pts.def.y + pts.att.y) / 2; const screenPct = avgY / canvas.height; const estimatedHeightPx = canvas.height * (0.05 + (screenPct * 0.15)); return { factor: REFERENCE_HEIGHT_CM / estimatedHeightPx, method: "Estimación por Posición" };
 }
 btnEvaluate.addEventListener('click', () => {
-    step = 99; toolsPanel.style.display = 'none'; const attackRight = document.getElementById('attack-dir-select').value === 'right'; let midY = canvas.height / 2;
+    step = 99; 
+    
+    // GESTION DE BOTONES AL TERMINAR (NUEVO)
+    instructionBox.style.display = 'none'; 
+    document.getElementById('attack-dir-select').style.display = 'none';
+    btnEvaluate.style.display = 'none';
+    
+    // Ocultamos botones flotantes de arriba
+    if(canvasTopControls) canvasTopControls.style.display = 'none'; 
+    // Mostramos botones de acción abajo
+    if(postAnalysisButtons) postAnalysisButtons.style.display = 'flex'; 
+
+    const attackRight = document.getElementById('attack-dir-select').value === 'right'; 
+    let midY = canvas.height / 2;
     let mDef = (pts.vp.y - pts.def.y) / (pts.vp.x - pts.def.x); let bDef = pts.def.y - mDef * pts.def.x;
     let mAtt = (pts.vp.y - pts.att.y) / (pts.vp.x - pts.att.x); let bAtt = pts.att.y - mAtt * pts.att.x;
     let xDefAtMid = (midY - bDef) / mDef; let xAttAtMid = (midY - bAtt) / mAtt; let isOffside = attackRight ? xAttAtMid > xDefAtMid : xAttAtMid < xDefAtMid;
     const focusX = (pts.def.x + pts.att.x) / 2; let yDefAtFocus = mDef * focusX + bDef; let yAttAtFocus = mAtt * focusX + bAtt; let distPx = Math.abs(yDefAtFocus - yAttAtFocus);
-    draw(); document.getElementById('result-container').style.display = 'flex'; document.getElementById('btn-download').style.display = 'block'; 
+    
+    draw(); 
+    document.getElementById('result-container').style.display = 'flex'; 
+    document.getElementById('btn-download').style.display = 'block'; 
+    
     const badge = document.getElementById('result-badge'); badge.className = isOffside ? 'res-offside' : 'res-onside'; badge.innerText = isOffside ? "OFFSIDE" : "HABILITADO";
     const scaleData = getBodyScaleFactor(); const TELEPHOTO_COMPRESSION = 0.4; const distCm = (distPx * scaleData.factor * TELEPHOTO_COMPRESSION).toFixed(1);
     document.getElementById('stat-dist').innerText = distCm + " cm"; document.getElementById('stat-px').innerText = Math.round(distPx) + " px"; document.getElementById('stat-ref').innerText = scaleData.method;
@@ -759,4 +804,3 @@ btnCapture.addEventListener('click', () => {
     
     closeVideoPicker();
 });
-
