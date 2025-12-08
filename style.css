@@ -261,8 +261,8 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
         align-items: center;
         gap: 5px; /* Un poco menos de espacio entre botones para que entren mejor */
         
-        /* 5. ESPACIO DE SEGURIDAD ABAJO: La clave para que no se corten */
-        padding: 10px 10px 50px 10px; /* 50px abajo es generoso para esquivar barras de navegador */
+        /* 5. ESPACIO DE SEGURIDAD ABAJO: REDUCIDO DE 50px A 15px */
+        padding: 10px 10px 15px 10px; /* <--- AQUÍ ESTÁ EL CAMBIO */
         box-sizing: border-box;
 
         /* 6. SCROLL: Si la pantalla es muy petisa, que aparezca scroll en vez de cortar */
