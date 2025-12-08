@@ -87,20 +87,11 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 }
 
 
-/* Herramientas Flotantes Análisis */
-#analysis-tools-panel { 
-        position: fixed; /* CAMBIO CLAVE: 'Fixed' ancla el panel a la pantalla real, no al div */
-        bottom: 0; left: 0; 
-        transform: none; 
-        width: 100%; /* Aseguramos que ocupe todo el ancho */
-        padding: 10px 10px 30px 10px; /* Más espacio abajo para evitar el recorte en móviles modernos */
-        max-width: 100%; 
-        gap: 8px; /* Un poquito más de separación entre elementos */
-        background: rgba(0,0,0,0.95); 
-        border-top: 1px solid #444; 
-        box-sizing: border-box; /* Para que el padding no rompa el ancho */
-        z-index: 900; /* Aseguramos que flote por encima de todo */
-    }
+/* Herramientas Flotantes Análisis (ESTILO BASE - PC) */
+#analysis-tools-panel {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 70; display: none; flex-direction: column; align-items: center; gap: 10px; width: 95%; max-width: 600px;
+}
 #instruction-box {
     background: rgba(0, 0, 0, 0.9); border: 1px solid #ffd700;
     padding: 15px 20px; border-radius: 10px; color: #fff; text-align: center;
@@ -122,7 +113,10 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-/* BOTONES MÓVIL (Nueva Imagen) */
+/* BOTONES POST-ANÁLISIS (Nueva Imagen) */
+#post-analysis-buttons {
+    display: none; gap: 10px; width: 100%; margin-top: 10px;
+}
 #mobile-analysis-controls { 
     display: flex; gap: 10px; width: 100%; justify-content: space-around;
     margin-top: 5px;
@@ -235,7 +229,9 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 #btn-game-offside { background-color: #dc3545; color: white; box-shadow: 0 4px 0 #a71d2a; }
 #btn-game-onside { background-color: #28a745; color: white; box-shadow: 0 4px 0 #1e7e34; }
 
-/* --- MEDIA QUERY PARA MÓVILES --- */
+/* =======================================================
+   --- MEDIA QUERY PARA MÓVILES (CORREGIDO) ---
+   ======================================================= */
 @media (max-width: 800px) { 
     #analysis-controls { display: none !important; }
     #top-bar { height: 50px; padding: 0 10px; }
@@ -244,15 +240,44 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     .main-mascot { width: 140px; }
     .big-upload-btn { font-size: 1.2rem; padding: 15px 20px; width: 250px; }
 
+    /* PANEL DE HERRAMIENTAS - MÓVIL (FIX PARA QUE NO SE CORTE) */
     #analysis-tools-panel { 
-        bottom: 0; left: 0; transform: none; 
-        padding: 8px 10px 15px 10px; 
-        max-width: 100%; gap: 5px;
+        /* 1. Usar Fixed para anclar al viewport (la pantalla real) */
+        position: fixed;
+        bottom: 0; 
+        left: 0; 
+        width: 100%;
+        
+        /* 2. Resetear el transform que se usa en PC */
+        transform: none; 
+        
+        /* 3. Estilo de caja */
         background: rgba(0,0,0,0.95); 
         border-top: 1px solid #444; 
+        
+        /* 4. LAYOUT VERTICAL: Forzamos columna para que NO se pongan al lado */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px; /* Un poco menos de espacio entre botones para que entren mejor */
+        
+        /* 5. ESPACIO DE SEGURIDAD ABAJO: La clave para que no se corten */
+        padding: 10px 10px 50px 10px; /* 50px abajo es generoso para esquivar barras de navegador */
+        box-sizing: border-box;
+
+        /* 6. SCROLL: Si la pantalla es muy petisa, que aparezca scroll en vez de cortar */
+        max-height: 85vh;
+        overflow-y: auto;
+        
+        /* 7. Asegurar que esté por encima */
+        z-index: 999;
     }
+
     #instruction-box { font-size: 0.85rem; padding: 8px 10px; margin-bottom: 2px; }
-    #btn-evaluate-big { padding: 12px 20px; font-size: 1.1rem; }
+    
+    /* Botón de evaluar un poco más chico para ahorrar espacio */
+    #btn-evaluate-big { padding: 12px 20px; font-size: 1.1rem; width: 100%; margin-bottom: 5px; }
+    
     #mode-selector { padding: 3px; gap: 0px; }
     .mode-btn { padding: 6px 15px; font-size: 0.8rem; }
     #mobile-analysis-controls .small-btn { padding: 8px 0; font-size: 0.85rem; }
@@ -262,7 +287,7 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
         padding: 6px 10px; font-size: 0.75rem;
     }
     #result-badge {
-        font-size: 1.8rem; /* Un poco más chico en celular */
+        font-size: 1.8rem; 
         padding: 8px 20px;
     }
 
@@ -280,5 +305,3 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
         padding-right: 5px; white-space: nowrap; 
     }
 }
-
-
