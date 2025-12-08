@@ -87,11 +87,27 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 }
 
 
-/* Herramientas Flotantes Análisis (ESTILO BASE - PC) */
+/* --- PANEL DE HERRAMIENTAS (BASE - PC) --- */
 #analysis-tools-panel {
-    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-    z-index: 70; display: none; flex-direction: column; align-items: center; gap: 10px; width: 95%; max-width: 600px;
+    position: absolute; 
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    z-index: 70; 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 10px; 
+    width: 95%; 
+    max-width: 600px;
+    
+    /* AGREGADO: Fondo para que sea visible en PC */
+    background: rgba(0, 0, 0, 0.85);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #444;
 }
+
 #instruction-box {
     background: rgba(0, 0, 0, 0.9); border: 1px solid #ffd700;
     padding: 15px 20px; border-radius: 10px; color: #fff; text-align: center;
@@ -113,9 +129,25 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-/* BOTONES NUEVOS COMPACTOS (Para datos y descarga) */
+/* --- BLOQUE DE ACCIONES POST-ANÁLISIS (CSS PURO) --- */
+#result-actions-block {
+    display: none; /* Controlado por JS */
+    width: 100%; 
+    flex-direction: column; 
+    gap: 8px;
+}
+.actions-row {
+    display: flex; gap: 8px; width: 100%;
+}
 .action-btn-compact {
-    padding: 10px; font-size: 0.9rem; border-radius: 8px; font-weight: bold;
+    padding: 10px; font-size: 0.9rem; border-radius: 8px; font-weight: bold; flex: 1;
+}
+.btn-dark { background:#333; color:#ccc; border:1px solid #555; }
+.btn-blue { background:#007bff; color:white; flex: 2 !important; }
+
+/* Botones Post-Análisis (Reiniciar/Nueva) */
+#post-analysis-buttons {
+    display: none; gap: 10px; width: 100%; margin-top: 5px;
 }
 
 /* --- ESTILO LUPA (ZOOM LENS) --- */
@@ -167,7 +199,7 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
 .res-offside { background-color: #dc3545 !important; color: white; } 
 .res-onside { background-color: #28a745 !important; color: white; }
 
-/* CAJA DE STATS (Ahora dentro del panel inferior) */
+/* CAJA DE STATS */
 #sofa-stats-box {
     background: rgba(0, 0, 0, 0.4); border: 1px solid #444; border-radius: 8px;
     padding: 10px; width: 100%; box-sizing: border-box;
@@ -179,6 +211,8 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     margin-top: 5px; font-style: italic; color: #fff; font-size: 0.9rem; text-align: center;
     font-weight: 600; line-height: 1.2;
 }
+
+#btn-download { display: block; } /* Asegura visibilidad en PC */
 
 
 /* --- VISTA CHALLENGE --- */
@@ -249,6 +283,9 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
         max-height: 85vh;
         overflow-y: auto;
         z-index: 999;
+        
+        /* Reset de bordes para móvil si es necesario */
+        border-radius: 0;
     }
 
     #instruction-box { font-size: 0.85rem; padding: 8px 10px; margin-bottom: 2px; }
