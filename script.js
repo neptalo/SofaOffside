@@ -309,17 +309,16 @@ if (!isTouchDevice) {
     // Distancia vertical fija (en píxeles de pantalla) entre el dedo y el centro de la lupa
     const FINGER_OFFSET_Y = 100;
 
-    function handleMobileTouch(e) {
+function handleMobileTouch(e) {
         if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) return;
         
         const touch = e.touches[0];
         
-        // 1. Calcular el punto OBJETIVO (donde va a estar la lupa)
-        // El objetivo es el X del dedo, pero Y - Offset (más arriba)
+        // 1. Calcular el punto OBJETIVO
         let targetScreenX = touch.clientX;
         let targetScreenY = touch.clientY - FINGER_OFFSET_Y;
 
-        // 2. Convertir ese punto de pantalla a coordenadas del Canvas (para saber qué pixel de la foto es)
+        // 2. Convertir a coordenadas Canvas
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width; 
         const scaleY = canvas.height / rect.height;
@@ -327,25 +326,28 @@ if (!isTouchDevice) {
         let canvasX = (targetScreenX - rect.left) * scaleX;
         let canvasY = (targetScreenY - rect.top) * scaleY;
 
-        // 3. CLAMP (Limitar): Asegurar que el punto objetivo no se salga de la foto
+        // 3. CLAMP (Limitar)
         if (canvasX < 0) canvasX = 0;
         if (canvasX > canvas.width) canvasX = canvas.width;
         if (canvasY < 0) canvasY = 0;
         if (canvasY > canvas.height) canvasY = canvas.height;
 
-        // 4. Guardar este punto como el "Elegido" para cuando suelte el dedo
+        // 4. Guardar posición
         lastTouchPos = { x: canvasX, y: canvasY };
 
+        // --- INICIO DEL TRUCO ---
+        // A) Dibujamos el canvas LIMPIO (sin la cruz roja) para sacar la foto
+        draw(true); 
+
         // 5. Mover la lupa visualmente
-        // Convertimos el punto canvas "clampeado" de vuelta a pixeles de pantalla para ubicar el div
         let finalScreenX = (canvasX / scaleX) + rect.left;
         let finalScreenY = (canvasY / scaleY) + rect.top;
 
         zoomLens.style.display = 'block';
-        zoomLens.style.left = (finalScreenX - 70) + 'px'; // Centrar el div
-        zoomLens.style.top = (finalScreenY - 70) + 'px';  // Centrar el div (puede irse negativo y recortarse, está bien)
+        zoomLens.style.left = (finalScreenX - 70) + 'px'; 
+        zoomLens.style.top = (finalScreenY - 70) + 'px'; 
 
-        // 6. Configurar la imagen interna de la lupa
+        // 6. Configurar la imagen interna de la lupa (Ahora tomará la foto LIMPIA)
         zoomLens.style.backgroundImage = `url('${canvas.toDataURL()}')`;
         const zoomFactor = ZOOM_LEVEL;
         zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
@@ -354,7 +356,9 @@ if (!isTouchDevice) {
         const bgY = -(canvasY * zoomFactor) + 70;
         zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
         
-        draw(); // Redibujar para mostrar la cruz en movimiento
+        // B) Ahora sí, volvemos a dibujar la cruz roja en el canvas real para que el usuario la vea
+        draw(false); 
+        // --- FIN DEL TRUCO ---
     }
 
     canvas.addEventListener('touchstart', (e) => {
@@ -455,8 +459,8 @@ function calculateIntersection(pShoulder, pFoot) {
     return {x: x, y: y};
 }
 
-// --- FUNCIÓN DE DIBUJO ---
-function draw() {
+// --- FUNCIÓN DE DIBUJO MODIFICADA ---
+function draw(skipCrosshair = false) { // <--- CAMBIO 1: Agregamos el parámetro
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     ctx.save();
@@ -500,8 +504,9 @@ function draw() {
         drawOffsideLineToVP(pts.att, COLORS.att);
     }
     
-    // 3. DIBUJAR MIRA DE PREVISUALIZACIÓN EN LA IMAGEN (Solo si hay posición guardada)
-    if (isTouchDevice && lastTouchPos && step < 99) {
+    // 3. DIBUJAR MIRA (Solo si NO estamos en modo skip y hay posición)
+    // <--- CAMBIO 2: Agregamos el chequeo !skipCrosshair
+    if (!skipCrosshair && isTouchDevice && lastTouchPos && step < 99) {
         drawCrosshair(lastTouchPos.x, lastTouchPos.y);
     }
 
@@ -754,3 +759,4 @@ btnCapture.addEventListener('click', () => {
     
     closeVideoPicker();
 });
+
