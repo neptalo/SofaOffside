@@ -320,4 +320,33 @@ canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%
     .sidebar-table th:last-child, .sidebar-table td:last-child {
         padding-right: 5px; white-space: nowrap; 
     }
+   
+   /* --- VISTA DE SELECCIÓN DE VIDEO (FIX Z-INDEX) --- */
+#video-picker-view {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #000;
+    z-index: 200; /* Importante: Más alto que el Start-Screen (50) y el Top-Bar (100) */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
+/* Aseguramos que el video no se salga de pantalla */
+#video-container {
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+}
+#main-video {
+    max-width: 100%;
+    max-height: 100%;
+}
+#video-controls-bar {
+    margin-top: 15px;
+    text-align: center;
+    z-index: 201;
+}
+}
+
