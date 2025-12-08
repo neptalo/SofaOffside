@@ -1,0 +1,295 @@
+/* =========================================
+   ESTILOS (CSS) - FIX VISIBILIDAD MÓVIL Y BOTÓN REINICIAR
+   ========================================= */
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0; padding: 0; background-color: #121212; color: white;
+    height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; user-select: none;
+}
+.hidden { display: none !important; }
+
+/* --- BARRA SUPERIOR --- */
+#top-bar {
+    height: 60px; background: #000; border-bottom: 1px solid #333;
+    display: flex; align-items: center; padding: 0 20px; justify-content: space-between; z-index: 100;
+}
+.logo { font-weight: 900; font-size: 1.3rem; letter-spacing: 0.5px; font-style: italic; }
+.logo .sofa { color: #ffc107; } .logo .offside { color: #ff3333; }
+.controls { display: flex; gap: 10px; align-items: center; }
+
+button, select {
+    padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+    font-weight: 600; font-size: 0.9rem; outline: none; transition: all 0.2s;
+}
+button:active { transform: scale(0.95); }
+.nav-btn { background: #222; color: #aaa; border: 1px solid #444; margin-right: 5px; }
+.nav-btn:hover { background: #333; color: white; }
+.nav-btn.active { background: #ff3333; color: white; font-weight: 900; border-color: #ff3333; }
+
+/* --- VISTA ANÁLISIS --- */
+#analysis-view { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+#analysis-controls select { display: none; } 
+#btn-reset { background: #ffc107; color: #000; display: none; }
+#btn-new { background: #555; color: white; border: 1px solid #777; }
+
+#start-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #1a1a1a; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; z-index: 50; text-align: center;
+}
+.main-mascot {
+    width: 180px; 
+    height: auto;
+    margin-bottom: 15px; 
+    filter: drop-shadow(0 0 20px rgba(255, 193, 7, 0.2)); 
+    animation: float 4s ease-in-out infinite; 
+}
+@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+.big-upload-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3); color: white;
+    padding: 20px 40px; border-radius: 50px; font-size: 1.5rem; font-weight: bold;
+    cursor: pointer; box-shadow: 0 10px 30px rgba(0, 123, 255, 0.4); display: inline-block;
+    margin: 10px; width: 280px; 
+}
+#btn-upload-video { background: linear-gradient(135deg, #28a745, #1e7e34); }
+
+#file-input { display: none; }
+#video-input { display: none; } 
+
+#workspace { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; background: #222; overflow: hidden; opacity: 0; }
+canvas { box-shadow: 0 0 50px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; }
+
+/* ESTILO DEL NUEVO BOTÓN FLOTANTE DE REINICIO (MOVIDO AL CENTRO) */
+#btn-floating-reset {
+    position: absolute;
+    top: 15px;
+    left: 50%; /* CENTRAR */
+    transform: translateX(-50%); /* CENTRAR */
+    z-index: 80;
+    background: rgba(0, 0, 0, 0.7); 
+    color: #ffc107; 
+    border: 1px solid #ffc107;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+#btn-floating-reset:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+
+/* Herramientas Flotantes Análisis */
+#analysis-tools-panel {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 70; display: none; flex-direction: column; align-items: center; gap: 10px; width: 95%; max-width: 600px;
+}
+#instruction-box {
+    background: rgba(0, 0, 0, 0.9); border: 1px solid #ffd700;
+    padding: 15px 20px; border-radius: 10px; color: #fff; text-align: center;
+    font-size: 1.1rem; margin-bottom: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%;
+}
+.highlight-text { color: #ffd700; font-weight: 800; text-transform: uppercase; }
+
+#mode-selector {
+    display: none; background: #222; padding: 5px; border-radius: 50px; border: 1px solid #555;
+}
+.mode-btn {
+    background: transparent; color: #aaa; padding: 10px 20px; border-radius: 40px; font-size: 0.9rem; margin: 0 5px;
+}
+.mode-btn.active { background: #fff; color: #000; box-shadow: 0 2px 10px rgba(255,255,255,0.2); font-weight: bold; }
+
+#btn-evaluate-big {
+    font-size: 1.2rem; padding: 15px 40px; background: #28a745; color: white;
+    border-radius: 50px; display: none; animation: pulse 2s infinite; border: 2px solid white;
+}
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+/* BOTONES MÓVIL (Nueva Imagen) */
+#mobile-analysis-controls { 
+    display: flex; gap: 10px; width: 100%; justify-content: space-around;
+    margin-top: 5px;
+}
+#mobile-analysis-controls .small-btn {
+    flex: 1; background: #333; color: #ccc; border: 1px solid #555; padding: 10px 0; border-radius: 8px; font-size: 0.9rem;
+}
+
+#zoom-lens {
+    position: fixed; width: 140px; height: 140px; border-radius: 50%; border: 3px solid #fff;
+    overflow: hidden; display: none; pointer-events: none; z-index: 999;
+    background-color: #000; background-repeat: no-repeat; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+}
+#zoom-lens::after, #zoom-lens::before {
+    content: ''; position: absolute; background: rgba(255, 50, 50, 0.8); top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+#zoom-lens::after { width: 20px; height: 1px; } #zoom-lens::before { height: 20px; width: 1px; }
+
+/* RESULTADOS Y DATOS DE SOFÁ */
+#result-container {
+    /* MANTENER EN LA ESQUINA DERECHA SUPERIOR */
+    position: absolute; top: 20px; right: 20px; z-index: 150;
+    display: none; flex-direction: column; align-items: flex-end; pointer-events: none;
+    max-width: 300px;
+}
+#result-badge {
+    font-size: 2.5rem; font-weight: 900; padding: 10px 25px; border-radius: 10px;
+    text-transform: uppercase; border: 4px solid white; margin-bottom: 5px; pointer-events: auto;
+    text-align: center; width: 100%; box-sizing: border-box;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.res-offside { background-color: #dc3545; color: white; } .res-onside { background-color: #28a745; color: white; }
+
+#btn-toggle-stats {
+    background: rgba(0,0,0,0.7); color: #ccc; border: 1px solid #555;
+    font-size: 0.8rem; padding: 5px 15px; border-radius: 20px; margin-bottom: 5px;
+    pointer-events: auto; cursor: pointer;
+}
+#sofa-stats-box {
+    background: rgba(0, 0, 0, 0.85); border: 1px solid #444; border-radius: 8px;
+    padding: 15px; margin-bottom: 10px; width: 100%; box-sizing: border-box;
+    display: none; pointer-events: auto; backdrop-filter: blur(5px);
+}
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 4px;}
+.stat-val { font-weight: bold; color: #ffc107; }
+#sofa-verdict {
+    margin-top: 10px; font-style: italic; color: #fff; font-size: 1rem; text-align: center;
+    font-weight: 600; line-height: 1.4;
+}
+
+#btn-download { background: #007bff; color: white; margin-top: 5px; padding: 10px 20px; display: none; pointer-events: auto; width: 100%; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); }
+
+/* --- VISTA CHALLENGE --- */
+#challenge-view { flex: 1; display: flex; background: #1a1a1a; overflow: hidden; }
+#challenge-content-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
+#challenge-sidebar { width: 300px; background: #222; border-left: 1px solid #333; display: flex; flex-direction: column; padding: 20px; z-index: 50; }
+@media (max-width: 800px) { #challenge-view { flex-direction: column; overflow-y: auto; } #challenge-sidebar { width: 100%; border-left: none; border-top: 1px solid #333; height: auto; } }
+
+.challenge-section { width: 100%; max-width: 700px; text-align: center; }
+.challenge-input { padding: 15px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; font-size: 1.2rem; width: 80%; max-width: 300px; margin-bottom: 20px; text-align: center; }
+#game-image-container { width: 100%; background: #000; height: 400px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 10px; position: relative; border: 2px solid #444; }
+#challenge-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+#btn-mute { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 5px; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; z-index: 50; }
+#btn-mute.muted { color: #ff5555; border-color: #ff5555; }
+
+#debug-error-msg { color: #ff3333; font-size: 0.8rem; margin-top: 5px; min-height: 20px; text-align: center; font-family: monospace; }
+#ready-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,1); display: flex; justify-content: center; align-items: center; z-index: 20; color: #ffc107; font-size: 6rem; font-weight: 900; text-shadow: 0 0 20px rgba(255, 193, 7, 0.5); pointer-events: all; }
+
+#game-feedback-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+.feedback-top-bar { background: rgba(0,0,0,0.8); width: 100%; padding: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); transform: translateY(-100%); transition: transform 0.3s; }
+.feedback-bottom-bar { background: linear-gradient(transparent, rgba(0,0,0,0.9)); width: 100%; padding: 15px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: translateY(100%); transition: transform 0.3s; }
+.show-feedback .feedback-top-bar { transform: translateY(0); } .show-feedback .feedback-bottom-bar { transform: translateY(0); }
+#fb-title { font-size: 2rem; font-weight: 900; text-transform: uppercase; text-shadow: 0 2px 10px black; }
+#fb-icon { font-size: 2rem; }
+#fb-subtitle { font-size: 1.5rem; color: #ffc107; font-weight: bold; text-shadow: 0 2px 4px black; }
+#fb-next { margin-top: 5px; font-size: 1rem; color: #ddd; font-weight: 600; }
+
+#timer { font-size: 3.5rem; font-weight: 900; color: #ffc107; margin-bottom: 10px; font-family: monospace; }
+
+#game-buttons { display: flex; justify-content: space-around; gap: 20px; width: 100%; }
+.game-btn { flex: 1; padding: 20px; font-size: 1.5rem; font-weight: 900; border-radius: 10px; text-transform: uppercase; transition: transform 0.1s, filter 0.2s; }
+.game-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.game-btn:active { transform: translateY(1px); }
+.btn-disabled { filter: grayscale(100%) opacity(0.5); pointer-events: none; cursor: not-allowed; }
+#btn-game-offside { background-color: #dc3545; color: white; box-shadow: 0 4px 0 #a71d2a; }
+#btn-game-onside { background-color: #28a745; color: white; box-shadow: 0 4px 0 #1e7e34; }
+
+/* --- MEDIA QUERY PARA MÓVILES (FIX CRÍTICO DE VISIBILIDAD) --- */
+@media (max-width: 800px) { 
+    /* Esconder Reiniciar/Nueva Imagen en la barra superior en móvil */
+    #analysis-controls { 
+        display: none !important;
+    }
+    
+    /* Achicar la barra superior para aprovechar espacio */
+    #top-bar { 
+        height: 50px; 
+        padding: 0 10px;
+    }
+    .logo {
+        font-size: 1.1rem;
+    }
+    
+    /* Achicar elementos de la pantalla de inicio */
+    .main-mascot {
+        width: 140px;
+    }
+    .big-upload-btn {
+        font-size: 1.2rem;
+        padding: 15px 20px;
+        width: 250px;
+    }
+
+    /* FIX CRÍTICO: Mover el panel de herramientas abajo y hacerlo más compacto */
+    #analysis-tools-panel { 
+        bottom: 0; left: 0; transform: none; 
+        padding: 8px 10px 15px 10px; /* Reducido el padding */
+        max-width: 100%;
+        gap: 5px;
+        background: rgba(0,0,0,0.95); /* Fondo opaco para que se vea claro */
+        border-top: 1px solid #444; 
+    }
+    /* Hacemos la caja de instrucciones más pequeña */
+    #instruction-box {
+        font-size: 0.85rem; 
+        padding: 8px 10px;
+        margin-bottom: 2px;
+    }
+    /* Botón de Analizar más pequeño */
+    #btn-evaluate-big {
+        padding: 12px 20px;
+        font-size: 1.1rem;
+    }
+    /* Selectores de modo más pequeños */
+    #mode-selector {
+        padding: 3px;
+        gap: 0px;
+    }
+    .mode-btn {
+        padding: 6px 15px;
+        font-size: 0.8rem;
+    }
+    /* Botones de Reiniciar/Nueva Imagen más pequeños */
+    #mobile-analysis-controls .small-btn {
+        padding: 8px 0;
+        font-size: 0.85rem;
+    }
+    /* El botón flotante también se reduce */
+    #btn-floating-reset {
+        top: 10px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    /* Challenge */
+    #challenge-content-area {
+        padding: 10px;
+    }
+    #game-image-container {
+        height: 250px;
+    }
+    .game-btn {
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+    
+    /* --- FIX RANKING TABLE FOR MOBILE (soluciona puntajes cortados) --- */
+    #challenge-sidebar {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #333;
+        height: auto;
+        padding: 15px 10px; /* Ajuste el padding para dejar espacio */
+        box-sizing: border-box; /* Asegura que el padding no cause desbordamiento */
+        overflow-x: auto; /* Permite scroll horizontal si la tabla es más ancha que la pantalla */
+    }
+    
+    .sidebar-table th, .sidebar-table td {
+        padding: 8px 5px; /* Reduce el padding horizontal de las celdas */
+    }
+    .sidebar-table th:last-child, .sidebar-table td:last-child {
+        padding-right: 5px; /* Pequeño padding a la derecha de los puntajes */
+        white-space: nowrap; /* Evita que los puntajes se corten o envuelvan */
+    }
+}
