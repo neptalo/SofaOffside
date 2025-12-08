@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- ATENCIÓN: PEGA AQUI TU CONFIGURACION DE FIREBASE REAL ---
+// --- CONFIGURACION DE FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyCXe8AmFFfQDC98A8Z4tXq6oKdbaPOkoJs",
   authDomain: "sofaoffside-ranking.firebaseapp.com",
@@ -42,7 +42,6 @@ function playSound(type) {
     if(audioCtx.state === 'suspended') audioCtx.resume();
     const now = audioCtx.currentTime;
     
-    // Lógica de sonidos
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
     
@@ -94,7 +93,7 @@ function switchView(viewName) {
         mobileControls.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
     }
 
-    // Control de visibilidad del botón de Marcar Punto y Lupa Móvil
+    // Control de visibilidad del botón de Marcar Punto
     const btnMark = document.getElementById('btn-mark-point');
     if (btnMark) {
         btnMark.classList.toggle('hidden', viewName !== 'analysis' || !isTouchDevice);
@@ -107,13 +106,8 @@ function switchView(viewName) {
          btnFloatingReset.classList.toggle('hidden', viewName !== 'analysis' || isStartScreen);
     }
     
-    // Iniciar el modo táctil si aplica
-    if(viewName === 'analysis' && isTouchDevice) {
-        initTouchMode();
-    } else if (viewName !== 'analysis') {
-        // Asegurar que la lupa esté apagada al cambiar de vista
-        if(zoomLens) zoomLens.style.display = 'none';
-    }
+    // Asegurar que la lupa esté apagada al cambiar de vista
+    if(viewName !== 'analysis' && zoomLens) zoomLens.style.display = 'none';
     
     if(viewName === 'challenge') { 
         showChallengeScreen('intro'); 
@@ -122,7 +116,7 @@ function switchView(viewName) {
 }
 
 /* =========================================================================
-   BLOQUE 2: MÓDULO DE ANÁLISIS (CON LUPA PC Y LUPA MÓVIL)
+   BLOQUE 2: MÓDULO DE ANÁLISIS (CORE)
    ========================================================================= */
 const ZOOM_LEVEL = 3; 
 const COLORS = { guide: '#ffd700', def: '#ff3333', att: '#00ccff', ref: '#cc00ff', depth: '#00ff99', calc: '#ffffff' };
@@ -153,25 +147,24 @@ const statsBox = document.getElementById('sofa-stats-box');
 const btnMarkPoint = document.getElementById('btn-mark-point');
 const btnFloatingReset = document.getElementById('btn-floating-reset');
 
-// Estado de arrastre para el móvil
-let isDragging = false;
-let lastX = 0;
-let lastY = 0;
-let offsetX = 0;
-let offsetY = 0;
-
+// VARIABLE NUEVA PARA MÓVIL: Guarda la posición donde quedó la mira
+let lastTouchPos = null;
 
 document.getElementById('mode-foot').addEventListener('click', (e) => setMode('foot', e.target));
 document.getElementById('mode-body').addEventListener('click', (e) => setMode('body', e.target));
+
+// --- CLICK EN BOTÓN MARCAR PUNTO (SOLO MÓVIL) ---
 if (btnMarkPoint) btnMarkPoint.addEventListener('click', () => { 
-    if(isTouchDevice && step < 99) {
-        // En móvil, el punto de marcado es el centro del canvas (donde está la lupa fija)
-        const p = { x: canvas.width / 2, y: canvas.height / 2 };
-        registerPoint(p);
+    if(isTouchDevice && step < 99 && lastTouchPos) {
+        // Usamos la posición "congelada" de la mira roja
+        registerPoint(lastTouchPos);
+        // Opcional: Borrar la mira después de marcar para que no confunda
+        lastTouchPos = null;
+        draw(); 
     }
 });
-if (btnFloatingReset) btnFloatingReset.addEventListener('click', resetPoints);
 
+if (btnFloatingReset) btnFloatingReset.addEventListener('click', resetPoints);
 
 btnToggleStats.addEventListener('click', () => {
     if(statsBox.style.display === 'none' || statsBox.style.display === '') {
@@ -210,41 +203,37 @@ function initSystem() {
     document.getElementById('video-picker-view').classList.add('hidden'); 
     document.getElementById('workspace').style.opacity = '1';
     
-    // VISIBILIDAD DE BOTONES DE CONTROL DE ANALISIS (PC/MÓVIL)
+    // VISIBILIDAD DE BOTONES
     const pcControls = document.getElementById('analysis-controls');
-    if (pcControls) {
-        pcControls.style.display = isTouchDevice ? 'none' : 'flex';
-    }
+    if (pcControls) pcControls.style.display = isTouchDevice ? 'none' : 'flex';
+
     const mobileControls = document.getElementById('mobile-analysis-controls');
-    if (mobileControls) {
-        mobileControls.classList.toggle('hidden', !isTouchDevice);
-    }
+    if (mobileControls) mobileControls.classList.toggle('hidden', !isTouchDevice);
+
     const btnMark = document.getElementById('btn-mark-point');
-    if (btnMark) {
-        btnMark.classList.toggle('hidden', !isTouchDevice);
-    }
-    // MOSTRAR BOTÓN FLOTANTE
-    if (btnFloatingReset) {
-        btnFloatingReset.classList.remove('hidden');
-    }
+    if (btnMark) btnMark.classList.toggle('hidden', !isTouchDevice);
+
+    if (btnFloatingReset) btnFloatingReset.classList.remove('hidden');
 
     toolsPanel.style.display = 'flex';
+    
+    // Ajuste de canvas a pantalla
     const aspect = analysisImg.width / analysisImg.height;
-    let w = document.getElementById('workspace').clientWidth; let h = w / aspect;
+    let w = document.getElementById('workspace').clientWidth; 
+    let h = w / aspect;
     if(h > document.getElementById('workspace').clientHeight) { 
         h = document.getElementById('workspace').clientHeight; w = h * aspect; 
     }
     canvas.width = w; canvas.height = h;
+    
     resetPoints();
-    if (isTouchDevice) initTouchMode(); // Inicializar el modo táctil tras cargar imagen
 }
 
 function resetPoints() {
     step = 1; waitingForRefs = false; refSubStep = 0; currentActor = 'def';
     pts = { p1:null, p2:null, p3:null, p4:null, vp:null, refTop:null, refBot:null, refDepthStart:null, refDepthEnd:null, def:null, defBody:null, defGround:null, att:null, attBody:null, attGround:null };
     markMode = 'foot';
-    offsetX = 0; // Resetear offset móvil
-    offsetY = 0;
+    lastTouchPos = null; // Reiniciar mira móvil
 
     toolsPanel.style.display = 'flex';
     instructionBox.style.display = 'block';
@@ -260,162 +249,121 @@ function resetPoints() {
     document.getElementById('attack-dir-select').style.display = 'none';
     btnDownload.style.display = 'none';
 
-    if (isTouchDevice && btnMarkPoint) {
-        btnMarkPoint.classList.remove('hidden');
-        if (document.getElementById('analysis-view').classList.contains('active')) {
-             initTouchMode(); // Reiniciar el modo lupa y arrastre
-        }
-    }
+    if (isTouchDevice && btnMarkPoint) btnMarkPoint.classList.remove('hidden');
     
     draw(); updateUI();
 }
 
-// LISTENERS DE BOTONES DE REINICIO/NUEVA IMAGEN (AHORA CENTRALIZADOS)
+// LISTENERS DE REINICIO
 document.getElementById('btn-new-tools').addEventListener('click', () => location.reload()); // MOVIL
 document.getElementById('btn-new').addEventListener('click', () => location.reload()); // PC
 
 
 /**
- * Corrige y escala las coordenadas del cliente (ventana) a las coordenadas internas del canvas (alta resolución).
- * @param {Event} e Evento de Mouse o Touch.
- * @returns {object} Coordenadas {x, y} escaladas.
+ * Corrige coordenadas del evento al canvas
  */
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX; 
-    const clientY = e.clientY;
-
     const scaleX = canvas.width / rect.width; 
     const scaleY = canvas.height / rect.height;
-
     return { 
-        x: (clientX - rect.left) * scaleX, 
-        y: (clientY - rect.top) * scaleY 
+        x: (e.clientX - rect.left) * scaleX, 
+        y: (e.clientY - rect.top) * scaleY 
     };
 }
 
 
-// --- LÓGICA DE INTERACCIÓN DEL CANVAS (PC vs. MOVIL) ---
+// --- LÓGICA DE INTERACCIÓN DEL CANVAS ---
 
 if (!isTouchDevice) {
-    // A) LÓGICA DE PC: Lupa Flotante y Clic de Precisión (NO TÁCTIL)
-
-    // 1. MOUSEMOVE: Lupa (PC)
+    // --- MODO PC (NO TOCAR, YA FUNCIONA BIEN) ---
     canvas.addEventListener('mousemove', (e) => {
         if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) { 
-            zoomLens.style.display = 'none'; 
-            return; 
+            zoomLens.style.display = 'none'; return; 
         }
-        
-        const pos = getPos(e); // Coordenadas escaladas para el zoom
+        const pos = getPos(e);
         
         zoomLens.style.display = 'block';
-        
-        // Posicionar la lupa en la pantalla (coordenadas de la ventana)
         zoomLens.style.left = (e.clientX - 70) + 'px'; 
         zoomLens.style.top = (e.clientY - 70) + 'px';
-        
-        // Configurar el fondo de la lupa para mostrar el canvas magnificado
-        // Capturamos el estado actual del canvas dibujado por draw()
         zoomLens.style.backgroundImage = `url('${canvas.toDataURL()}')`;
+        
         const zoomFactor = ZOOM_LEVEL;
         zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
-        
-        // Centrar la imagen dentro de la lupa (coordenadas inversas)
         const bgX = -(pos.x * zoomFactor) + 70;
         const bgY = -(pos.y * zoomFactor) + 70;
         zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
     });
 
-    canvas.addEventListener('mouseleave', () => {
-        if (zoomLens) zoomLens.style.display = 'none';
-    });
+    canvas.addEventListener('mouseleave', () => { if (zoomLens) zoomLens.style.display = 'none'; });
     
-    // 2. CLICK: Marcar punto (PC)
     canvas.addEventListener('click', (e) => {
         if(document.getElementById('analysis-view').classList.contains('hidden')) return;
         if(step >= 99) return; 
-        
-        const p = getPos(e); // Coordenadas escaladas correctas
-        registerPoint(p);
+        registerPoint(getPos(e));
     });
     
 } else {
-    // B) LÓGICA MÓVIL (TÁCTIL): Lupa Fija y Arrastre de Imagen
+    // --- MODO MÓVIL (LÓGICA SATÉLITE) ---
     
-    function initTouchMode() {
-        if (step >= 99) return;
-        // La lupa es fija en el centro/arriba
-        zoomLens.style.display = 'block';
-        zoomLens.style.position = 'absolute';
-        zoomLens.style.left = '50%';
-        zoomLens.style.top = '15%'; 
-        zoomLens.style.transform = 'translate(-50%, 0)';
-        draw();
-    }
-    
-    canvas.addEventListener('touchstart', (e) => {
+    // Función para manejar el movimiento del dedo y la lupa
+    function handleMobileTouch(e) {
         if(step >= 99 || document.getElementById('analysis-view').classList.contains('hidden')) return;
-        isDragging = true;
-        lastX = e.touches[0].clientX;
-        lastY = e.touches[0].clientY;
-        e.preventDefault(); 
+        
+        const touch = e.touches[0];
+        const pos = getPos(touch); // Posición real en el canvas
+        lastTouchPos = pos; // Guardamos dónde está el dedo para dibujar la mira y marcar
+        
+        // 1. Mostrar Lupa
+        zoomLens.style.display = 'block';
+        
+        // 2. Configurar imagen de la lupa (el canvas actual)
+        zoomLens.style.backgroundImage = `url('${canvas.toDataURL()}')`;
+        const zoomFactor = ZOOM_LEVEL;
+        zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
+        
+        // 3. Posicionar el fondo para que coincida con el dedo
+        const bgX = -(pos.x * zoomFactor) + 70; // 70 es la mitad de 140px (ancho lupa)
+        const bgY = -(pos.y * zoomFactor) + 70;
+        zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
+        
+        // 4. Posicionar la Lupa FLOTANTE (Satélite)
+        // Por defecto, la ponemos 100px ARRIBA del dedo para que se vea
+        let lensTop = touch.clientY - 160; 
+        let lensLeft = touch.clientX - 70; // Centrada horizontalmente con el dedo
+        
+        // Si el dedo está muy arriba (cerca del borde superior), mover la lupa ABAJO del dedo
+        if (touch.clientY < 180) {
+            lensTop = touch.clientY + 50; 
+        }
+
+        zoomLens.style.top = lensTop + 'px';
+        zoomLens.style.left = lensLeft + 'px';
+        
+        draw(); // Redibujamos para ver la mira roja en el canvas
+    }
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Evitar scroll
+        handleMobileTouch(e);
     });
 
     canvas.addEventListener('touchmove', (e) => {
-        if (!isDragging || step >= 99) return;
         e.preventDefault();
-
-        const deltaX = e.touches[0].clientX - lastX;
-        const deltaY = e.touches[0].clientY - lastY;
-
-        // Mover el offset
-        offsetX += deltaX; 
-        offsetY += deltaY;
-
-        lastX = e.touches[0].clientX;
-        lastY = e.touches[0].clientY;
-        
-        draw(); // Redibujar el canvas con el nuevo offset
+        handleMobileTouch(e);
     });
 
-    canvas.addEventListener('touchend', () => {
-        isDragging = false;
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        // Al soltar, NO borramos lastTouchPos, para que la mira quede "congelada"
+        // Solo ocultamos la lupa grande para limpiar la vista
+        zoomLens.style.display = 'none';
     });
-
-    // Función de dibujo de la mira (Crosshair) - Definida aquí porque es exclusiva de móvil
-    function drawCrosshair(x, y) {
-        ctx.save();
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x - 10, y);
-        ctx.lineTo(x + 10, y);
-        ctx.moveTo(x, y - 10);
-        ctx.lineTo(x, y + 10);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2);
-        ctx.strokeStyle = 'red';
-        ctx.stroke();
-        ctx.restore();
-    }
-    window.drawCrosshair = drawCrosshair; // Hacemos que la función sea global para usarla si es necesario
 }
 
 
 function registerPoint(p) {
     playSound('pop');
-
-    // CÁLCULO DE COORDENADAS REALES DE MARCADO (INCLUYE EL OFFSET MÓVIL)
-    if (isTouchDevice) {
-        // La mira está en el centro (canvas.width/2, canvas.height/2)
-        // La coordenada del punto a guardar es: centro - offset
-        p = {
-            x: canvas.width / 2 - offsetX, 
-            y: canvas.height / 2 - offsetY
-        };
-    }
 
     if(step === 1) { pts.p1 = p; step++; }
     else if(step === 2) { pts.p2 = p; step++; }
@@ -492,21 +440,16 @@ function calculateIntersection(pShoulder, pFoot) {
     return {x: x, y: y};
 }
 
-// --- FUNCIÓN DE DIBUJO CENTRAL (UNIFICADA) ---
+// --- FUNCIÓN DE DIBUJO ---
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     ctx.save();
     
-    if (isTouchDevice && document.getElementById('analysis-view').classList.contains('active')) {
-        // Modo Táctil: Aplicar offset al contexto para mover la imagen
-        ctx.translate(offsetX, offsetY);
-    } 
-    
     // 1. Dibujar la imagen
     ctx.drawImage(analysisImg, 0, 0, canvas.width, canvas.height);
     
-    // 2. Dibujar todos los puntos y líneas (se dibujan en el contexto transformado si aplica)
+    // 2. Dibujar todos los puntos y líneas
     if(pts.p1) drawDot(pts.p1, COLORS.guide);
     if(pts.p2) { drawDot(pts.p2, COLORS.guide); drawLineFull(pts.p1, pts.p2, COLORS.guide); }
     if(pts.p3) drawDot(pts.p3, COLORS.guide);
@@ -542,25 +485,29 @@ function draw() {
         drawOffsideLineToVP(pts.att, COLORS.att);
     }
 
-    // El ctx.toDataURL() debe ocurrir antes del ctx.restore() si queremos la imagen con offset
-    if (isTouchDevice && document.getElementById('analysis-view').classList.contains('active') && step < 99) {
-         // Capturar el canvas transformado para la lupa
-        const zoomFactor = ZOOM_LEVEL;
-        zoomLens.style.backgroundImage = `url('${canvas.toDataURL('image/jpeg', 0.8)}')`;
-        zoomLens.style.backgroundSize = `${canvas.width * zoomFactor}px ${canvas.height * zoomFactor}px`;
+    // 3. DIBUJAR MIRA MÓVIL (CROSSHAIR) si hay posición guardada
+    if (isTouchDevice && lastTouchPos && step < 99) {
+        drawCrosshair(lastTouchPos.x, lastTouchPos.y);
+    }
 
-        // Calcular la posición del fondo para centrar la mira
-        const bgX = -(canvas.width / 2 * zoomFactor) + 70 + (offsetX * zoomFactor);
-        const bgY = -(canvas.height / 2 * zoomFactor) + 70 + (offsetY * zoomFactor);
-        zoomLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
-    }
+    ctx.restore();
+}
+
+function drawCrosshair(x, y) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - 15, y); ctx.lineTo(x + 15, y);
+    ctx.moveTo(x, y - 15); ctx.lineTo(x, y + 15);
+    ctx.stroke();
     
-    ctx.restore(); // Restablecer la matriz de transformación
-    
-    if (isTouchDevice && document.getElementById('analysis-view').classList.contains('active') && step < 99) {
-        // Dibujar la mira (crosshair) en el centro visual (sin offset)
-        drawCrosshair(canvas.width / 2, canvas.height / 2);
-    }
+    // Circulito centro
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
+    ctx.restore();
 }
 
 function drawOffsideLineToVP(p, c) {
@@ -589,13 +536,13 @@ function updateUI() {
         else if(step===4) txt = "2. Toca el <span class='highlight-text'>FINAL</span> de esa segunda línea.";
         else if(step===5) {
             txt = `3. <span class='highlight-text' style='color:#ff3333'>DEFENSOR</span>: `;
-            if(markMode === 'foot') txt += isTouchDevice ? "ARRÁSTRA la imagen y MARCA el PIE." : "Marca el PIE más atrasado.";
-            else txt += (pts.defBody) ? "Ahora ARRASTRA y MARCA el BOTÍN." : "Marca el HOMBRO/CABEZA.";
+            if(markMode === 'foot') txt += isTouchDevice ? "Arrastra y apunta. Luego botón MARCAR." : "Marca el PIE más atrasado.";
+            else txt += (pts.defBody) ? "Apunta al BOTÍN. Luego MARCAR." : "Apunta al HOMBRO/CABEZA. Luego MARCAR.";
         }
         else if(step===6) {
             txt = `4. <span class='highlight-text' style='color:#00ccff'>ATACANTE</span>: `;
-            if(markMode === 'foot') txt += isTouchDevice ? "ARRÁSTRA la imagen y MARCA el PIE." : "Marca el PIE más adelantado.";
-            else txt += (pts.attBody) ? "Ahora ARRASTRA y MARCA el BOTÍN." : "Marca el HOMBRO/CABEZA.";
+            if(markMode === 'foot') txt += isTouchDevice ? "Arrastra y apunta. Luego botón MARCAR." : "Marca el PIE más adelantado.";
+            else txt += (pts.attBody) ? "Apunta al BOTÍN. Luego MARCAR." : "Apunta al HOMBRO/CABEZA. Luego MARCAR.";
         }
         else if(step===7) txt = "Selecciona dirección y ANALIZAR.";
     }
@@ -637,18 +584,16 @@ btnDownload.addEventListener('click', () => {
     const w = canvas.width, h = canvas.height; 
     ctx.save(); 
     
-    // --- FIX DESCARGA IMAGEN: Cálculo de tamaños de fuente relativos al canvas ---
+    // --- FIX DESCARGA IMAGEN ---
     const smallFont = Math.max(10, Math.round(w * 0.025)); 
     const bigFont = Math.max(16, Math.round(w * 0.04));    
     const margin = Math.round(w * 0.02);
 
-    // DIBUJAR SOFAOFFSIDE
     ctx.font = `italic 900 ${smallFont}px Segoe UI`; 
     ctx.textAlign = "right"; 
     ctx.fillStyle = "rgba(0,0,0,0.5)"; 
     ctx.fillText("SofaOffside", w - margin, h - margin);
 
-    // CÁLCULO DE ANCHO DE TEXTO PARA POSICIONAR 'Sofa'
     ctx.fillStyle = "#ffc107"; 
     const offsideTextWidth = ctx.measureText("Offside").width;
     ctx.fillText("Sofa", w - (margin + offsideTextWidth + 4), h - (margin + 2)); 
@@ -656,7 +601,6 @@ btnDownload.addEventListener('click', () => {
     ctx.fillStyle = "#ff3333"; 
     ctx.fillText("Offside", w - margin, h - (margin + 2));
 
-    // DIBUJAR VEREDICTO
     const resText = document.getElementById('result-badge').innerText;
     ctx.font = `bold ${bigFont}px Segoe UI`; 
     ctx.textAlign = "left"; 
@@ -677,7 +621,7 @@ btnDownload.addEventListener('click', () => {
 
 
 /* =========================================================================
-   BLOQUE 3: MÓDULO CHALLENGE (CON FILTRO DE TOP 10)
+   BLOQUE 3: MÓDULO CHALLENGE
    ========================================================================= */
 const CANTIDAD_TOTAL_JUGADAS = 28; 
 const CANTIDAD_JUGADAS_POR_PARTIDO = 10; 
@@ -708,7 +652,6 @@ btnOff.addEventListener('click',()=>processAnswer('O',(Date.now()-startTime)/100
 function processAnswer(a,t){if(btnOff.classList.contains('btn-disabled'))return;isGamePaused=true;stopAllTimers();elTimer.innerText=(10-t).toFixed(1);btnOff.classList.add('btn-disabled');btnOn.classList.add('btn-disabled');playSound('whistle');const ok=(a===currentCorrectAnswer);imgGame.onload=null;imgGame.src=currentSolutionImg;let p=0;if(ok){p=100+Math.max(0,(10-t)*10);totalScore+=p;}fbOverlay.classList.add('show-feedback');const ti=document.getElementById('fb-title'),ic=document.getElementById('fb-icon'),su=document.getElementById('fb-subtitle'),nx=document.getElementById('fb-next');if(ok){ic.innerText="✅";ti.innerText="¡CORRECTO!";ti.style.color="#28a745";su.innerText=`+${Math.round(p)} Puntos`;}else{ic.innerText="❌";ti.innerText="¡INCORRECTO!";ti.style.color="#dc3545";su.innerText=`Era ${currentCorrectAnswer==='O'?'Offside':'Habilitado'}`;}let pa=3;nx.innerText=`Siguiente en ${pa}...`;pauseInt=setInterval(()=>{pa--;if(currentRoundIndex<gameQueue.length)nx.innerText=`Siguiente en ${pa}...`;else nx.innerText="Finalizando...";if(pa<=0){clearInterval(pauseInt);loadNextRound();}},1000);
 }
 
-// --- FUNCIÓN AUXILIAR PARA OBTENER EL PUNTAJE MÍNIMO DEL TOP 10 ---
 async function getMinTopScore() {
     if (!db) return 0;
     try {
@@ -716,71 +659,36 @@ async function getMinTopScore() {
         const querySnapshot = await getDocs(q);
         let scores = [];
         querySnapshot.forEach((doc) => { scores.push(doc.data().score); });
-
-        // Agregar puntajes de bots a la lista
         BOTS.forEach(bot => scores.push(bot.score));
-
-        // Ordenar de mayor a menor y obtener el décimo puntaje
         scores.sort((a, b) => b - a); 
-        
-        // El puntaje mínimo para entrar al Top 10 es el puntaje en el índice 9 (décimo)
         return scores.length >= 10 ? scores[9] : 0; 
-    } catch (e) {
-        console.error("Error obteniendo puntaje mínimo de ranking:", e);
-        return 0; // En caso de error, el umbral es 0.
-    }
+    } catch (e) { return 0; }
 }
 
-// *** FUNCIÓN endChallenge MODIFICADA PARA COMPROBAR Y GUARDAR ***
 async function endChallenge(){
     stopAllTimers();
     const finalScore = Math.round(totalScore);
     document.getElementById('final-score-display').innerText = finalScore;
-    
-    // 1. OBTENER EL PUNTAJE MÍNIMO REQUERIDO
     const minScore = await getMinTopScore();
-
-    // 2. COMPROBAR Y SOLO GUARDAR SI EL SCORE ES MAYOR
-    if (finalScore > minScore) {
-        console.log(`Puntaje ${finalScore} supera el mínimo (${minScore}). Guardando...`);
-        await saveScore(userName, finalScore);
-    } else {
-        console.log(`Puntaje ${finalScore} no supera el mínimo (${minScore}). No guardado.`);
-    }
-
-    // 3. MOSTRAR LA PANTALLA FINAL Y CARGAR EL RANKING
+    if (finalScore > minScore) await saveScore(userName, finalScore);
     showChallengeScreen('final');
     renderRanking();
 }
 
-
-// --- FUNCIONES DE RANKING (Firebase) ---
-
 async function saveScore(n, s) {
-    if(!db) return; // Si no hay db (modo offline), no guarda
-    try { 
-        await addDoc(collection(db, RANK_COLLECTION), { 
-            name: n, 
-            score: s, 
-            date: new Date() 
-        }); 
-    } catch (e) { console.error("Error guardando score en Firebase:", e); }
+    if(!db) return; 
+    try { await addDoc(collection(db, RANK_COLLECTION), { name: n, score: s, date: new Date() }); } catch (e) { console.error(e); }
 }
 
 async function renderRanking() {
     const tb = document.getElementById('sidebar-ranking-body');
-    if(!db) { 
-        tb.innerHTML = '<tr><td colspan="3">Offline (Firebase no configurado)</td></tr>'; 
-        return; 
-    }
-    tb.innerHTML = '<tr><td colspan="3">Cargando Ranking...</td></tr>';
+    if(!db) { tb.innerHTML = '<tr><td colspan="3">Offline</td></tr>'; return; }
+    tb.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
     try {
         const q = query(collection(db, RANK_COLLECTION), orderBy("score", "desc"), limit(10));
         const querySnapshot = await getDocs(q);
         let scores = [];
         querySnapshot.forEach((doc) => { scores.push(doc.data()); });
-        
-        // Agregar bots si es necesario
         if (scores.length < 10) { scores = [...scores, ...BOTS.slice(0, 10 - scores.length)].sort((a,b) => b.score - a.score); }
 
         tb.innerHTML = '';
@@ -791,10 +699,7 @@ async function renderRanking() {
             tr.innerHTML = `<td>${i + 1}</td><td>${m}${it.name}</td><td style="text-align:right;">${Math.round(it.score)}</td>`;
             tb.appendChild(tr);
         });
-    } catch (e) { 
-        console.error("Error cargando ranking de Firebase:", e); 
-        tb.innerHTML = '<tr><td colspan="3">Error cargando ranking (Red)</td></tr>';
-    }
+    } catch (e) { tb.innerHTML = '<tr><td colspan="3">Error (Red)</td></tr>'; }
 }
 
 
