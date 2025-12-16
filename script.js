@@ -527,10 +527,10 @@ function drawOffsideLineToVP(p, c) {
     let b = p.y - m * p.x;
     ctx.beginPath();
     ctx.moveTo(0, b); ctx.lineTo(canvas.width, m * canvas.width + b);
-    ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.stroke();
+    ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.stroke();
 }
-function drawDot(p, c) { ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fillStyle=c; ctx.fill(); ctx.stroke(); }
-function drawLine(p1, p2, c) { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle=c; ctx.lineWidth=2; ctx.stroke(); }
+function drawDot(p, c) { ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fillStyle=c; ctx.fill(); ctx.stroke(); }
+function drawLine(p1, p2, c) { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle=c; ctx.lineWidth=1; ctx.stroke(); }
 function drawLineFull(p1, p2, c) { ctx.beginPath(); const m=(p2.y-p1.y)/(p2.x-p1.x); const b=p1.y-m*p1.x; ctx.moveTo(0,b); ctx.lineTo(canvas.width,m*canvas.width+b); ctx.strokeStyle=c; ctx.lineWidth=1; ctx.stroke(); }
 function drawDashedLine(p1, p2, c) { ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle=c; ctx.stroke(); ctx.setLineDash([]); }
 function updateUI() {
@@ -809,3 +809,4 @@ function playTutorial() {
         overlay.classList.remove('tutorial-active');
     }, 6500); 
 }
+
