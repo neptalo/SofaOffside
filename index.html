@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SofaOffside - Árbitro de Sillón</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="Imagenes_Generales/SofaOffsideicono32.png" type="image/png">
 </head>
 <body>
 
@@ -35,7 +34,30 @@
 
         <div id="workspace">
             <canvas id="canvas"></canvas>
-            
+
+            <div id="tutorial-overlay">
+                <div class="escenario-mini">
+                    <div class="tut-cancha">
+                        <div class="tut-cursor-wrapper"><div class="tut-flecha"></div></div>
+                        <div class="tut-pasto"></div>
+                        
+                        <div class="tut-pintura tut-linea-fondo"></div>
+                        <div class="tut-pintura tut-area-chica"></div>
+                        <div class="tut-pintura tut-area-grande"></div>
+                        <div class="tut-pintura tut-medialuna"></div>
+                        <div class="tut-medio"></div>
+                        <div class="tut-pintura tut-circulo"></div>
+    
+                        <div id="tp1" class="tut-punto"></div>
+                        <div id="tp2" class="tut-punto"></div>
+                        <div id="tl1" class="tut-linea"></div>
+    
+                        <div id="tp3" class="tut-punto"></div>
+                        <div id="tp4" class="tut-punto"></div>
+                        <div id="tl2" class="tut-linea"></div>
+                    </div>
+                </div>
+            </div>
             <div id="canvas-top-controls" class="hidden">
                 <button id="btn-float-reset">🔄 Reiniciar Análisis</button>
                 <button id="btn-float-new">📂 Nueva Imagen</button>
@@ -151,5 +173,3 @@
 <script type="module" src="script.js"></script>
 </body>
 </html>
-
-
