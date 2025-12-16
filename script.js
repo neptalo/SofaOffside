@@ -202,6 +202,9 @@ function initSystem() {
     canvas.width = w; canvas.height = h;
     
     resetPoints();
+
+    // NUEVO TUTORIAL: Se dispara aquí, justo cuando se carga la imagen
+    playTutorial();
 }
 
 function resetPoints() {
@@ -783,3 +786,26 @@ btnCapture.addEventListener('click', () => {
     
     closeVideoPicker();
 });
+
+/* =========================================================================
+   NUEVO TUTORIAL (LOGICA AGREGADA)
+   ========================================================================= */
+let tutorialTimer;
+
+function playTutorial() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if(!overlay) return;
+
+    // 1. Mostrar (Aparece suavemente)
+    overlay.classList.add('tutorial-active');
+    
+    // 2. Limpiar timer por seguridad
+    if(tutorialTimer) clearTimeout(tutorialTimer);
+
+    // 3. Programar la desaparición.
+    // La animación dura 6s. El corte brusco visual es al 88% (5.2s).
+    // Dejamos que corra 6.5s para asegurar que se limpió todo y luego hacemos fade out del contenedor.
+    tutorialTimer = setTimeout(() => {
+        overlay.classList.remove('tutorial-active');
+    }, 6500); 
+}
